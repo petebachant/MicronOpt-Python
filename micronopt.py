@@ -8,10 +8,6 @@ import socket
 import struct
 import sys
 
-if sys.version_info >= (3, 0):
-    input_function = input
-else:
-    input_function = raw_input
     
 class MicronInterrogator(object):
     def __init__(self, ip_address="10.0.0.126", port=1852):
@@ -40,8 +36,8 @@ class MicronInterrogator(object):
     def get_data(self):
         self.send_command("GET_DATA")
         self.data = self.latest_response
-        print(self.data[0:7])
-        print(struct.unpack("8b", self.data[1]))
+        data = struct.unpack("88B", self.data)
+        print(data)
 
     def disconnect(self):
         self.socket.close()
@@ -50,21 +46,27 @@ def test_class():
     interr = MicronInterrogator()
     interr.connect()
     print(interr.idn)
+    interr.get_data()
 
-def test():
-    ip_address = "10.0.0.126"
-    port = 1852
-    buffsize = 1024
+def terminal(ip_address="10.0.0.126", port=1852):
+    """Creates a communcation terminal to send commands."""
+    if sys.version_info >= (3, 0):
+        input_function = input
+        raw_input = None
+    else:
+        input_function = raw_input
     message = "#IDN?\n"
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((ip_address, port))
     while message != "exit":
-        message = input_function("~ #")
+        message = input_function("#")
         if message != "exit":
             s.send(b"#" + message.encode("ascii") + b"\n")
-            response = s.recv(buffsize)
-            print(response[10:])
+            respsize = int(s.recv(10))
+            response = s.recv(respsize)
+            print(response)
     s.close()
 
 if __name__ == "__main__":
-    test_class()
+#    test_class()
+    terminal()
