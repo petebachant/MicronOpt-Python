@@ -52,7 +52,8 @@ class MicronInterrogator(object):
             num_ffpi_peaks, num_fbg_peaks,  # 3
             num_dut2_peaks, num_dut1_peaks,  # 4
             num_dut4_peaks, num_dut3_peaks,  # 5
-            reserved7, qr, acq_counter3,  # 6 needs parse
+            acq_counter3, qr, reserved7,
+#            reserved7, qr, acq_counter3,  # 6 needs parse
             serial_number,  # 7
             kernel_timestamp_microseconds,  # 8
             kernel_timestamp_seconds,  # 9
@@ -72,12 +73,12 @@ class MicronInterrogator(object):
         ) = struct.unpack(
             '<'  # big endian
             'BBBB'  # 0 needs parse
-            'BBH'  # 1 needs parse
+            'HBB'  # 1 needs parse
             'HH'  # 2
             'HH'  # 3
             'HH'  # 4
             'HH'  # 5
-            'BBH'  # 6 needs parse
+            'HBB'  # 6 needs parse
             'I'  # 7
             'I'  # 8
             'I'  # 9
