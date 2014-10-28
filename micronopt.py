@@ -63,29 +63,24 @@ class MicronInterrogator(object):
         data = self.latest_response
         # unpack the struct into variables
         (
-            fs_radix, cur_layer, fw_ver, abcde,
-#            abcde, fw_ver, cur_layer, fs_radix,  # 0 needs parse
-            fbg_thermistor, knpl, fghij,
-#            fghij, knpl, fbg_thermistor,  # 1 needs parse
-            reserved2, tx_ambient_temp,
-#            tx_ambient_temp, reserved2,  # 2
-            num_ffpi_peaks, num_fbg_peaks,  # 3
-            num_dut2_peaks, num_dut1_peaks,  # 4
-            num_dut4_peaks, num_dut3_peaks,  # 5
-            acq_counter3, qr, reserved7,
-#            reserved7, qr, acq_counter3,  # 6 needs parse
+            fs_radix, cur_layer, fw_ver, abcde, #  0 fixed
+            fbg_thermistor, knpl, fghij, # 1 fixed
+            reserved2, tx_ambient_temp, # 2 fixed
+            num_fbg_peaks, num_ffpi_peaks, # 3 fixed
+            num_dut1_peaks, num_dut2_peaks, # 4 fixed
+            num_dut3_peaks, num_dut4_peaks, # 5 fixed
+            acq_counter3, qr, reserved7, # 6 fixed
             serial_number,  # 7
             kernel_timestamp_microseconds,  # 8
             kernel_timestamp_seconds,  # 9
-            kernel_src_buffer, kernel_buffers,  # 10
+            kernel_buffers, kernel_src_buffer, # 10 fixed
             error_and_kernel_rt_loc0,  # 11 needs parse
-            buffer, header_ver, header_length,
-#            header_length, header_ver, buffer,  # 12
-            dut2_gain, dut1_gain,  # 13
-            dut4_gain, dut3_gain,  # 14
-            dut2_noise_thresh, dut1_noise_thresh,  # 15
-            dut4_noise_thresh, dut3_noise_thresh,  # 16
-            hw_clk_div, peak_data_rate_div,  # 17
+            buffer, header_ver, header_length, # 12 fixed
+            dut1_gain, dut2_gain, # 13 fixed
+            dut3_gain, dut4_gain, # 14 fixed
+            dut1_noise_thresh, dut2_noise_thresh, # 15 fixed
+            dut3_noise_thresh, dut4_noise_thresh, # 16 fixed
+            peak_data_rate_div, hw_clk_div, # 17 fixed
             granularity,  # 18
             reserved4,  # 19
             starting_lambda,  # 20
@@ -116,9 +111,7 @@ class MicronInterrogator(object):
             'I',  # 21
             data
         )
-        print(data)
-        print(hex(abcde))
-        print(abcde & 0x10)
+
         # 0 parse abcde
         acq_triggered = bool(abcde & 0x80)
         calibration_fault = bool(abcde & 0x40)
@@ -170,7 +163,10 @@ class MicronInterrogator(object):
                      "Granularity" : granularity,
                      "Operating mode" : operating_mode,
                      "Starting lambda" : starting_lambda,
-                     "Ending lambda" : ending_lambda}
+                     "Ending lambda" : ending_lambda,
+                     "Kernel timestamp (seconds)" : kernel_timestamp_seconds,
+                     "Kernel timestamp (microseconds)" : kernel_timestamp_microseconds,
+                     "Triggering mode" : triggering_mode}
         for k,v in data_dict.items():
             print("{}: {}".format(k,v))
 
