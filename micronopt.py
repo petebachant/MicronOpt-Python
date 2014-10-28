@@ -37,6 +37,16 @@ class MicronInterrogator(object):
     def serial_no(self):
         self.send_command("GET_SN")
         return self.latest_response.decode()
+        
+    @property
+    def operating_mode(self):
+        self.send_command("GET_OPERATING_MODE")
+        return int(self.latest_response)
+    @operating_mode.setter
+    def operating_mode(self, mode):
+        self.send_command("SET_OPERATING_MODE {}".format(mode))
+        if self.latest_response.decode() != "Setting Operating mode to {}.\n".format(mode):
+            raise ValueError("Invalid value for operating mode.")
 
     def get_data(self):
         self.send_command("GET_DATA")
@@ -170,6 +180,8 @@ def test_class():
     print(interr.idn)
     interr.get_data()
     print(interr.serial_no)
+    interr.operating_mode = 1
+    print(interr.operating_mode)
 
 def terminal(ip_address="192.168.1.166", port=1852):
     """Creates a communcation terminal to send commands."""
