@@ -47,6 +47,16 @@ class MicronInterrogator(object):
         self.send_command("SET_OPERATING_MODE {}".format(mode))
         if self.latest_response.decode() != "Setting Operating mode to {}.\n".format(mode):
             raise ValueError("Invalid value for operating mode.")
+            
+    @property
+    def trig_mode(self):
+        self.send_command("GET_TRIG_MODE")
+        return int(self.latest_response)
+    @trig_mode.setter
+    def trig_mode(self, mode):
+        self.send_command("SET_TRIG_MODE {}".format(mode))
+        if self.latest_response.decode() != "Setting triggering mode to {}.\n".format(mode):
+            raise ValueError("Invalid value for triggering mode.")
 
     def get_data(self):
         self.send_command("GET_DATA")
@@ -182,6 +192,8 @@ def test_class():
     print(interr.serial_no)
     interr.operating_mode = 1
     print(interr.operating_mode)
+    interr.trig_mode = 1
+    print(interr.trig_mode)
 
 def terminal(ip_address="192.168.1.166", port=1852):
     """Creates a communcation terminal to send commands."""
