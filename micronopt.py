@@ -151,34 +151,28 @@ class MicronInterrogator(object):
         error = error_and_kernel_rt_loc0 >> 24
         kernel_rt_loc0 = error_and_kernel_rt_loc0 & 0xffffff
         
-        print("Serial number", serial_number)
-        print("FBG thermistor:", fbg_thermistor)
-        print("FS radix:", fs_radix)
-        print("Firmware version:", fw_ver)
-        print("Acquisition triggered:", acq_triggered)
-        print("Calibration fault:", calibration_fault)
-        print("start_of_frame:", start_of_frame)
-        print("Primary fan state:", primary_fan_state)
-        print("Secondary fan state:", secondary_fan_state)
-        print("s0_mux_state:", s0_mux_state)
-        
-        print("Percent buffer:", buffer)
-        
-        print("Header length:", header_length)
-        print("Header version:", header_ver)
-        
-        print("Tx ambient temp:", tx_ambient_temp)
-        
-        print("sm041_mux_level:", sm041_mux_level)
-        
-        print("hw_clk_div:", hw_clk_div)
-        
-        print("Granularity:", granularity)
-        
-        print("Operating mode:", operating_mode)
-        
-        print("Starting lambda:", starting_lambda)
-        print("Ending lambda:", ending_lambda)
+        data_dict = {"Serial number" : serial_number,
+                     "FBG thermistor" : fbg_thermistor,
+                     "FS radix" : fs_radix,
+                     "Firmware version" : fw_ver,
+                     "Acquisition triggered" : acq_triggered,
+                     "Calibration fault" : calibration_fault,
+                     "Start of frame" : start_of_frame,
+                     "Primary fan state" : primary_fan_state,
+                     "Secondary fan state" : secondary_fan_state,
+                     "S0 mux state " : s0_mux_state,
+                     "Percent buffer" : buffer,
+                     "Header length" : header_length,
+                     "Header version " : header_ver,
+                     "Tx ambient temp" : tx_ambient_temp,
+                     "SM041 mux level" : sm041_mux_level,
+                     "HW clock div" : hw_clk_div,
+                     "Granularity" : granularity,
+                     "Operating mode" : operating_mode,
+                     "Starting lambda" : starting_lambda,
+                     "Ending lambda" : ending_lambda}
+        for k,v in data_dict.items():
+            print("{}: {}".format(k,v))
 
     def disconnect(self):
         self.socket.close()
@@ -192,7 +186,6 @@ def test_class():
     print(interr.serial_no)
     interr.operating_mode = 1
     print(interr.operating_mode)
-    interr.trig_mode = 1
     print(interr.trig_mode)
 
 def terminal(ip_address="192.168.1.166", port=1852):
