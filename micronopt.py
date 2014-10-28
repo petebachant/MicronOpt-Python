@@ -58,7 +58,7 @@ class MicronInterrogator(object):
             kernel_timestamp_seconds,  # 9
             kernel_src_buffer, kernel_buffers,  # 10
             error_and_kernel_rt_loc0,  # 11 needs parse
-            header_ver, header_length, buffer,
+            buffer, header_ver, header_length,
 #            header_length, header_ver, buffer,  # 12
             dut2_gain, dut1_gain,  # 13
             dut4_gain, dut3_gain,  # 14
@@ -83,7 +83,7 @@ class MicronInterrogator(object):
             'I'  # 9
             'HH'  # 10
             'I'  # 11 needs parse
-            'HBB'  # 12
+            'BBH'  # 12
             'HH'  # 13
             'HH'  # 14
             'HH'  # 15
