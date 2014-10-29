@@ -4,6 +4,7 @@ This module is for working with Micron Optics interrogators.
 
 """
 from __future__ import print_function, division
+import datetime
 import socket
 import struct
 import sys
@@ -57,10 +58,11 @@ class MicronInterrogator(object):
         self.send_command("SET_TRIG_MODE {}".format(mode))
         if self.latest_response.decode() != "Setting triggering mode to {}.\n".format(mode):
             raise ValueError("Invalid value for triggering mode.")
-
+            
     def get_data(self):
         self.send_command("GET_DATA")
-        data = self.latest_response
+        status_header = self.latest_response[:88]
+        data = self.latest_response[88:]
         # unpack the struct into variables
         (
             fs_radix, cur_layer, fw_ver, abcde, #  0 fixed
@@ -95,7 +97,7 @@ class MicronInterrogator(object):
             'HH'  # 5
             'HBB'  # 6 needs parse
             'I'  # 7
-            'I'  # 8
+            'I'  # 8 
             'I'  # 9
             'HH'  # 10
             'I'  # 11 needs parse
@@ -109,7 +111,7 @@ class MicronInterrogator(object):
             'I'  # 19
             'I'  # 20
             'I',  # 21
-            data
+            status_header
         )
 
         # 0 parse abcde
@@ -166,9 +168,14 @@ class MicronInterrogator(object):
                      "Ending lambda" : ending_lambda,
                      "Kernel timestamp (seconds)" : kernel_timestamp_seconds,
                      "Kernel timestamp (microseconds)" : kernel_timestamp_microseconds,
+                     "Kernel timestamp" : datetime.datetime.fromtimestamp(kernel_timestamp_seconds),
                      "Triggering mode" : triggering_mode}
-        for k,v in data_dict.items():
+        for k,v in sorted(data_dict.items()):
             print("{}: {}".format(k,v))
+            
+        if len(data) > 0:
+            (data1,) = struct.unpack("<I", data)
+            print(data1/granularity)
 
     def disconnect(self):
         self.socket.close()
@@ -180,7 +187,7 @@ def test_class():
     print(interr.idn)
     interr.get_data()
     print(interr.serial_no)
-    interr.operating_mode = 1
+    interr.operating_mode = 0
     print(interr.operating_mode)
     print(interr.trig_mode)
 
