@@ -186,7 +186,6 @@ class MicronInterrogator(object):
     def disconnect(self):
         self.socket.close()
 
-
 def test_class():
     interr = MicronInterrogator()
     interr.connect()
@@ -194,7 +193,7 @@ def test_class():
     interr.get_data()
     interr.disconnect()
     
-def test_continuous():
+def test_continuous(test_dur=2):
     import matplotlib.pyplot as plt
     interr = MicronInterrogator()
     interr.connect()
@@ -204,13 +203,17 @@ def test_continuous():
     data1 = []
     data2 = []
     serial_no = []
-    while t < 2:
+    while t < test_dur:
         t = time.time() - t0
         t_array.append(t)
         interr.get_data()
         data1.append(interr.data1)
         data2.append(interr.data2)
         serial_no.append(interr.data_serial_no)
+    for i, s in enumerate(serial_no):
+        if i < len(serial_no) - 1:
+            if serial_no[i + 1] - s != 1:
+                print("Datapoint {} is not sequential".format(i))
     plt.plot(t_array, data2)
     interr.disconnect()
 
