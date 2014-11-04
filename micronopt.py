@@ -177,13 +177,11 @@ class MicronInterrogator(object):
 #            print("{}: {}".format(k,v))
                      
         self.data_serial_no = serial_number
-            
-        if len(data) > 0:
-            (self.data1,) = struct.unpack("<I", data[:4])
-            self.data1 /= granularity
-            if len(data) > 4:
-                (self.data2,) = struct.unpack("<I", data[4:8])
-                self.data2 /= granularity
+        
+        datapoints = len(data)//4
+        for n in range(datapoints):
+            (self.sensors[n].wavelength,) = struct.unpack("<I", data[n*4:(n+1)*4])
+            self.sensors[n].wavelength /= granularity
                 
     def add_sensors(self, properties_file="Config/fbg_properties.json"):
         with open(properties_file) as f:
@@ -193,6 +191,12 @@ class MicronInterrogator(object):
             self.sensors[properties["position"]] = Sensor(sensor_name)
         for sensor in self.sensors:
             sensor.read_properties(properties_file)
+            
+    def zero_strain_sensors(self):
+        self.get_data()
+        for sensor in self.sensors:
+            if sensor.type == "strain":
+                sensor.initial_wavelength = sensor.wavelength
 
     def disconnect(self):
         self.socket.close()
@@ -210,10 +214,11 @@ class Sensor(object):
         self.gage_factor = None
         self.gage_constant_1 = None
         self.gage_constant_2 = None
-        self.temperature_change = None
+        self.temperature_change = 0.0
         self.cte_specimen = None
         self.wavelength_shift = None
         self.wavelength = None
+        self.initial_wavelength = None
         self.wavelength_offset = None
         self.cal_coeff_1 = None
         self.cal_coeff_2 = None
@@ -231,7 +236,10 @@ class Sensor(object):
         self.serial_no = self.properties["serial number"]
         self.nominal_wavelength = self.properties["nominal wavelength"]
         if self.type == "strain":
-            pass
+            self.gage_factor = self.properties["gage factor"]
+            self.gage_constant_1 = self.properties["gage constant 1"]
+            self.gage_constant_2 = self.properties["gage constant 2"]
+            self.cte_specimen = self.properties["CTE of test specimen"]
         elif self.type == "temperature":
             self.temp_at_nom_wavelength = self.properties["temperature at nominal wavelength"]
             self.wavelength_offset = self.properties["wavelength offset"]
@@ -244,6 +252,7 @@ class Sensor(object):
     @property
     def strain(self):
         if self.type.lower() == "strain":
+            self.wavelength_shift = self.wavelength - self.initial_wavelength
             self.thermal_output = self.temperature_change*\
                     (self.gage_constant_1/self.gage_factor + self.cte_specimen\
                     - self.gage_constant_2) 
@@ -270,10 +279,12 @@ def test_connection():
     interr.get_data()
     interr.disconnect()
     
-def test_continuous(test_dur=2):
+def test_continuous(test_dur=20):
     import matplotlib.pyplot as plt
     interr = MicronInterrogator()
     interr.connect()
+    interr.add_sensors("test/fbg_properties.json")
+    interr.zero_strain_sensors()
     t0 = time.time()
     t = 0.0
     t_array = []
@@ -284,8 +295,8 @@ def test_continuous(test_dur=2):
         t = time.time() - t0
         t_array.append(t)
         interr.get_data()
-        data1.append(interr.data1)
-        data2.append(interr.data2)
+        data1.append(interr.sensors[0].temperature)
+        data2.append(interr.sensors[1].strain)
         serial_no.append(interr.data_serial_no)
     for i, s in enumerate(serial_no):
         if i < len(serial_no) - 1:
@@ -326,7 +337,7 @@ def terminal(ip_address="192.168.1.166", port=1852):
     s.close()
 
 if __name__ == "__main__":
-#    test_continuous()
+    test_continuous()
 #    test_sensor_class()
-    test_add_sensors()
+#    test_add_sensors()
     
