@@ -8,6 +8,7 @@ import datetime
 import socket
 import struct
 import time
+import json
 import sys
 
     
@@ -17,6 +18,7 @@ class MicronInterrogator(object):
         self.port = port
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.latest_response = ""
+        self.sensors = []
     
     def connect(self):
         self.socket.connect((self.ip_address, self.port))
@@ -182,11 +184,86 @@ class MicronInterrogator(object):
             if len(data) > 4:
                 (self.data2,) = struct.unpack("<I", data[4:8])
                 self.data2 /= granularity
+                
+    def add_sensors(self, properties_file="Config/fbg_properties.json"):
+        with open(properties_file) as f:
+            sensor_props = json.load(f)
+        self.sensors = [None]*len(sensor_props)
+        for sensor_name, properties in sensor_props.items():
+            self.sensors[properties["position"]] = Sensor(sensor_name)
+        for sensor in self.sensors:
+            sensor.read_properties(properties_file)
 
     def disconnect(self):
         self.socket.close()
+        
 
-def test_class():
+class Sensor(object):
+    def __init__(self, sensor_name):
+        self.name = sensor_name
+        self.properties = {}
+        self.position = None
+        self.type = None
+        self.part_no = None
+        self.serial_no = None
+        self.nominal_wavelength = None
+        self.gage_factor = None
+        self.gage_constant_1 = None
+        self.gage_constant_2 = None
+        self.temperature_change = None
+        self.cte_specimen = None
+        self.wavelength_shift = None
+        self.wavelength = None
+        self.wavelength_offset = None
+        self.cal_coeff_1 = None
+        self.cal_coeff_2 = None
+        self.cal_coeff_3 = None
+        self.cal_coeff_0 = None
+        self.temp_sens = None
+    
+    def read_properties(self, filename="Config/fbg_properties.json"):
+        """Reads the properties in JSON format from the given file."""
+        with open(filename) as f:
+            self.properties = json.load(f)[self.name]
+        self.type = self.properties["sensor type"]
+        self.position = self.properties["position"]
+        self.part_no = self.properties["part number"]
+        self.serial_no = self.properties["serial number"]
+        self.nominal_wavelength = self.properties["nominal wavelength"]
+        if self.type == "strain":
+            pass
+        elif self.type == "temperature":
+            self.temp_at_nom_wavelength = self.properties["temperature at nominal wavelength"]
+            self.wavelength_offset = self.properties["wavelength offset"]
+            self.cal_coeff_0 = self.properties["calibration coeff. 0"]
+            self.cal_coeff_1 = self.properties["calibration coeff. 1"]
+            self.cal_coeff_2 = self.properties["calibration coeff. 2"]
+            self.cal_coeff_3 = self.properties["calibration coeff. 3"]
+            self.temp_sens = self.properties["temp. sensitivity"]
+        
+    @property
+    def strain(self):
+        if self.type.lower() == "strain":
+            self.thermal_output = self.temperature_change*\
+                    (self.gage_constant_1/self.gage_factor + self.cte_specimen\
+                    - self.gage_constant_2) 
+            return (self.wavelength_shift/self.nominal_wavelength)\
+                    *1e6/self.gage_factor - self.thermal_output
+        else:
+            return None
+            
+    @property
+    def temperature(self):
+        if self.type.lower() == "temperature":
+            return self.cal_coeff_3*(self.wavelength + self.wavelength_offset)**3 \
+                    + self.cal_coeff_2*(self.wavelength + self.wavelength_offset)**2 \
+                    + self.cal_coeff_1*(self.wavelength + self.wavelength_offset) \
+                    + self.cal_coeff_0
+        else:
+            return None
+
+
+def test_connection():
     interr = MicronInterrogator()
     interr.connect()
     print(interr.idn)
@@ -216,6 +293,18 @@ def test_continuous(test_dur=2):
                 print("Datapoint {} is not sequential".format(i))
     plt.plot(t_array, data2)
     interr.disconnect()
+    
+def test_sensor_class(name="os4300"):
+    sensor = Sensor(name)
+    sensor.read_properties("test/fbg_properties.json")
+    print(sensor.name)
+    
+def test_add_sensors():
+    micron = MicronInterrogator()
+    micron.add_sensors("test/fbg_properties.json")
+    for sensor in micron.sensors:
+        print(sensor.name)
+        print(sensor.properties)
 
 def terminal(ip_address="192.168.1.166", port=1852):
     """Creates a communcation terminal to send commands."""
@@ -237,4 +326,7 @@ def terminal(ip_address="192.168.1.166", port=1852):
     s.close()
 
 if __name__ == "__main__":
-    test_continuous()
+#    test_continuous()
+#    test_sensor_class()
+    test_add_sensors()
+    
