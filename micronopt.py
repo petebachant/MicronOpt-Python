@@ -7,6 +7,7 @@ from __future__ import print_function, division
 import datetime
 import socket
 import struct
+import time
 import sys
 
     
@@ -170,12 +171,17 @@ class MicronInterrogator(object):
                      "Kernel timestamp (microseconds)" : kernel_timestamp_microseconds,
                      "Kernel timestamp" : datetime.datetime.fromtimestamp(kernel_timestamp_seconds),
                      "Triggering mode" : triggering_mode}
-        for k,v in sorted(data_dict.items()):
-            print("{}: {}".format(k,v))
+#        for k,v in sorted(data_dict.items()):
+#            print("{}: {}".format(k,v))
+                     
+        self.data_serial_no = serial_number
             
         if len(data) > 0:
-            (data1,) = struct.unpack("<I", data)
-            print(data1/granularity)
+            (self.data1,) = struct.unpack("<I", data[:4])
+            self.data1 /= granularity
+            if len(data) > 4:
+                (self.data2,) = struct.unpack("<I", data[4:8])
+                self.data2 /= granularity
 
     def disconnect(self):
         self.socket.close()
@@ -186,10 +192,27 @@ def test_class():
     interr.connect()
     print(interr.idn)
     interr.get_data()
-    print(interr.serial_no)
-    interr.operating_mode = 0
-    print(interr.operating_mode)
-    print(interr.trig_mode)
+    interr.disconnect()
+    
+def test_continuous():
+    import matplotlib.pyplot as plt
+    interr = MicronInterrogator()
+    interr.connect()
+    t0 = time.time()
+    t = 0.0
+    t_array = []
+    data1 = []
+    data2 = []
+    serial_no = []
+    while t < 2:
+        t = time.time() - t0
+        t_array.append(t)
+        interr.get_data()
+        data1.append(interr.data1)
+        data2.append(interr.data2)
+        serial_no.append(interr.data_serial_no)
+    plt.plot(t_array, data2)
+    interr.disconnect()
 
 def terminal(ip_address="192.168.1.166", port=1852):
     """Creates a communcation terminal to send commands."""
@@ -211,5 +234,4 @@ def terminal(ip_address="192.168.1.166", port=1852):
     s.close()
 
 if __name__ == "__main__":
-    test_class()
-#    terminal()
+    test_continuous()
