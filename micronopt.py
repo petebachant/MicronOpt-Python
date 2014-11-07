@@ -10,6 +10,7 @@ import struct
 import time
 import json
 import sys
+import numpy as np
 
     
 class MicronInterrogator(object):
@@ -177,6 +178,8 @@ class MicronInterrogator(object):
 #            print("{}: {}".format(k,v))
                      
         self.data_serial_no = serial_number
+        self.kernel_timestamp = float(kernel_timestamp_seconds) \
+                                + float(kernel_timestamp_microseconds)*1e-6
         
         datapoints = len(data)//4
         for n in range(datapoints):
@@ -279,31 +282,35 @@ def test_connection():
     interr.get_data()
     interr.disconnect()
     
-def test_continuous(test_dur=20):
+def test_continuous(test_dur=5):
     import matplotlib.pyplot as plt
     interr = MicronInterrogator()
     interr.connect()
     interr.add_sensors("test/fbg_properties.json")
     interr.zero_strain_sensors()
-    t0 = time.time()
-    t = 0.0
     t_array = []
     data1 = []
     data2 = []
     serial_no = []
+    t = 0.0
+    t0 = time.time()
     while t < test_dur:
         t = time.time() - t0
-        t_array.append(t)
         interr.get_data()
+        t_array.append(interr.kernel_timestamp)
         data1.append(interr.sensors[0].temperature)
         data2.append(interr.sensors[1].strain)
         serial_no.append(interr.data_serial_no)
+        time.sleep(0.0005)
     for i, s in enumerate(serial_no):
         if i < len(serial_no) - 1:
             if serial_no[i + 1] - s != 1:
                 print("Datapoint {} is not sequential".format(i))
+    t_array = np.asarray(t_array)
+    t_array -= t_array[0]
     plt.plot(t_array, data2)
     interr.disconnect()
+    return t_array, serial_no, data1, data2
     
 def test_sensor_class(name="os4300"):
     sensor = Sensor(name)
@@ -337,7 +344,7 @@ def terminal(ip_address="192.168.1.166", port=1852):
     s.close()
 
 if __name__ == "__main__":
-    test_continuous()
+    t, serial_no, data1, data2 = test_continuous()
 #    test_sensor_class()
 #    test_add_sensors()
     
