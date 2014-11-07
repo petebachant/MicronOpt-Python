@@ -13,7 +13,7 @@ import sys
 import numpy as np
 
     
-class MicronInterrogator(object):
+class Interrogator(object):
     def __init__(self, ip_address="192.168.1.166", port=1852):
         self.ip_address = ip_address
         self.port = port
@@ -276,7 +276,7 @@ class Sensor(object):
 
 
 def test_connection():
-    interr = MicronInterrogator()
+    interr = Interrogator()
     interr.connect()
     print(interr.idn)
     interr.get_data()
@@ -284,7 +284,7 @@ def test_connection():
     
 def test_continuous(test_dur=5):
     import matplotlib.pyplot as plt
-    interr = MicronInterrogator()
+    interr = Interrogator()
     interr.connect()
     interr.add_sensors("test/fbg_properties.json")
     interr.zero_strain_sensors()
@@ -318,7 +318,7 @@ def test_sensor_class(name="os4300"):
     print(sensor.name)
     
 def test_add_sensors():
-    micron = MicronInterrogator()
+    micron = Interrogator()
     micron.add_sensors("test/fbg_properties.json")
     for sensor in micron.sensors:
         print(sensor.name)
