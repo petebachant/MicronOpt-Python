@@ -243,6 +243,7 @@ class Sensor(object):
             self.gage_constant_1 = self.properties["gage constant 1"]
             self.gage_constant_2 = self.properties["gage constant 2"]
             self.cte_specimen = self.properties["CTE of test specimen"]
+            self.initial_wavelength = self.nominal_wavelength
         elif self.type == "temperature":
             self.temp_at_nom_wavelength = self.properties["temperature at nominal wavelength"]
             self.wavelength_offset = self.properties["wavelength offset"]
@@ -309,6 +310,12 @@ def test_continuous(test_dur=5):
     t_array = np.asarray(t_array)
     t_array -= t_array[0]
     plt.plot(t_array, data2)
+    plt.xlabel("t (s)")
+    plt.ylabel(r"$\mu$-strain")
+    plt.figure()
+    plt.plot(t_array, data1)
+    plt.xlabel("t (s)")
+    plt.ylabel("T (deg. C)")
     interr.disconnect()
     return t_array, serial_no, data1, data2
     
@@ -344,7 +351,7 @@ def terminal(ip_address="192.168.1.166", port=1852):
     s.close()
 
 if __name__ == "__main__":
-    t, serial_no, data1, data2 = test_continuous()
+    t, serial_no, data1, data2 = test_continuous(test_dur=10)
 #    test_sensor_class()
 #    test_add_sensors()
     
