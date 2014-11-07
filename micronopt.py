@@ -63,6 +63,31 @@ class Interrogator(object):
         if self.latest_response.decode() != "Setting triggering mode to {}.\n".format(mode):
             raise ValueError("Invalid value for triggering mode.")
             
+    @property
+    def capabilities(self):
+        self.send_command("GET_CAPABILITIES")
+        resp = int(self.latest_response)
+        spec_diag_view = bin(resp)[-1]
+        sensor_distance = bin(resp)[-2]
+        return(spec_diag_view, sensor_distance)
+        
+    @property
+    def ch1_gain(self):
+        """Returns channel 1 gain in decibels."""
+        self.send_command("GET_CH_GAIN_DB 1")
+        return float(self.latest_response)
+    @ch1_gain.setter
+    def ch1_gain(self, gain):
+        self.send_command("SET_CH_GAIN_DB 1 {}".format(gain))
+        
+    @property
+    def ch1_noise_thresh(self):
+        self.send_command("GET_CH_NOISE_THRESH 1")
+        return float(self.latest_response)
+    @ch1_noise_thresh.setter
+    def ch1_noise_thresh(self, val):
+        self.send_command("SET_CH_NOISE_THRESH 1 {}".format(val))
+            
     def get_data(self):
         self.send_command("GET_DATA")
         status_header = self.latest_response[:88]
@@ -200,6 +225,29 @@ class Interrogator(object):
         for sensor in self.sensors:
             if sensor.type == "strain":
                 sensor.initial_wavelength = sensor.wavelength
+    
+    def save_settings(self):
+        self.send_command("SAVE_SETTINGS")
+        if self.latest_response.decode() == "Settings Saved.\n":
+            print("Settings saved")
+        else:
+            print("Saving settings unsuccessful")
+            
+    def who(self):
+        """Returns a list of IP addresses connected to the interrogator."""
+        self.send_command("WHO?")
+        return self.latest_response.decode()
+        
+    def whoami(self):
+        """Returns the IP address of the remote PC that sent the command."""
+        self.send_command("WHOAMI?")
+        return self.latest_response.decode()
+        
+    def set_date(self, datestring):
+        self.send_command("SET_DATE {}".format(datestring))
+            
+    def reboot(self):
+        self.send_command("REBOOT")
 
     def disconnect(self):
         self.socket.close()
@@ -280,7 +328,9 @@ def test_connection():
     interr = Interrogator()
     interr.connect()
     print(interr.idn)
-    interr.get_data()
+#    interr.get_data()
+    print(interr.capabilities)
+    interr.who()
     interr.disconnect()
     
 def test_continuous(test_dur=5):
@@ -351,7 +401,8 @@ def terminal(ip_address="192.168.1.166", port=1852):
     s.close()
 
 if __name__ == "__main__":
-    t, serial_no, data1, data2 = test_continuous(test_dur=10)
+    test_connection()
+#    t, serial_no, data1, data2 = test_continuous(test_dur=10)
 #    test_sensor_class()
 #    test_add_sensors()
     
