@@ -1,0 +1,24 @@
+{"os4300" : 
+    {"sensor type" : "temperature",
+     "position" : 0,
+     "part number" : "os4310-1536-1FC-1-FC-S",
+     "serial number" : "B312914",
+     "nominal wavelength" : 1535.973,
+     "temperature at nominal wavelength" : 23.4,
+     "wavelength offset" : 8.0146,
+     "calibration coeff. 3" : 3.7529852856878300,
+     "calibration coeff. 2" : -17397.533932784500,
+     "calibration coeff. 1" : 26883059.47322850,
+     "calibration coeff. 0" : -13846814019.5879,
+     "temp. sensitivity" : "~10"},
+"os3200" :
+    {"sensor type" : "strain",
+     "position" : 1,
+     "part number" : "os3200-1572-1FC-1FC",
+     "serial number" : "B133917",
+     "nominal wavelength" : 1572.0,
+     "gage factor" : 0.796,
+     "gage constant 1" : 6.156,
+     "gage constant 2" : 0.70,
+     "CTE of test specimen" : 23.6}
+}
