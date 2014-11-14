@@ -14,12 +14,17 @@ import numpy as np
 
     
 class Interrogator(object):
-    def __init__(self, ip_address="192.168.1.166", port=1852):
+    def __init__(self, ip_address="192.168.1.166", port=1852, fbg_props=None):
         self.ip_address = ip_address
         self.port = port
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.latest_response = ""
         self.sensors = []
+        if fbg_props:
+            self.create_sensors(fbg_props)
+        self.sample_rate = 1000
+        self.append_data = False
+        self.data = {}
     
     def connect(self):
         self.socket.connect((self.ip_address, self.port))
@@ -175,32 +180,30 @@ class Interrogator(object):
         error = error_and_kernel_rt_loc0 >> 24
         kernel_rt_loc0 = error_and_kernel_rt_loc0 & 0xffffff
         
-        data_dict = {"Serial number" : serial_number,
-                     "FBG thermistor" : fbg_thermistor,
-                     "FS radix" : fs_radix,
-                     "Firmware version" : fw_ver,
-                     "Acquisition triggered" : acq_triggered,
-                     "Calibration fault" : calibration_fault,
-                     "Start of frame" : start_of_frame,
-                     "Primary fan state" : primary_fan_state,
-                     "Secondary fan state" : secondary_fan_state,
-                     "S0 mux state " : s0_mux_state,
-                     "Percent buffer" : buffer,
-                     "Header length" : header_length,
-                     "Header version " : header_ver,
-                     "Tx ambient temp" : tx_ambient_temp,
-                     "SM041 mux level" : sm041_mux_level,
-                     "HW clock div" : hw_clk_div,
-                     "Granularity" : granularity,
-                     "Operating mode" : operating_mode,
-                     "Starting lambda" : starting_lambda,
-                     "Ending lambda" : ending_lambda,
-                     "Kernel timestamp (seconds)" : kernel_timestamp_seconds,
-                     "Kernel timestamp (microseconds)" : kernel_timestamp_microseconds,
-                     "Kernel timestamp" : datetime.datetime.fromtimestamp(kernel_timestamp_seconds),
-                     "Triggering mode" : triggering_mode}
-#        for k,v in sorted(data_dict.items()):
-#            print("{}: {}".format(k,v))
+        self.data_header = {"Serial number" : serial_number,
+                            "FBG thermistor" : fbg_thermistor,
+                            "FS radix" : fs_radix,
+                            "Firmware version" : fw_ver,
+                            "Acquisition triggered" : acq_triggered,
+                            "Calibration fault" : calibration_fault,
+                            "Start of frame" : start_of_frame,
+                            "Primary fan state" : primary_fan_state,
+                            "Secondary fan state" : secondary_fan_state,
+                            "S0 mux state " : s0_mux_state,
+                            "Percent buffer" : buffer,
+                            "Header length" : header_length,
+                            "Header version " : header_ver,
+                            "Tx ambient temp" : tx_ambient_temp,
+                            "SM041 mux level" : sm041_mux_level,
+                            "HW clock div" : hw_clk_div,
+                            "Granularity" : granularity,
+                            "Operating mode" : operating_mode,
+                            "Starting lambda" : starting_lambda,
+                            "Ending lambda" : ending_lambda,
+                            "Kernel timestamp (seconds)" : kernel_timestamp_seconds,
+                            "Kernel timestamp (microseconds)" : kernel_timestamp_microseconds,
+                            "Kernel timestamp" : datetime.datetime.fromtimestamp(kernel_timestamp_seconds),
+                            "Triggering mode" : triggering_mode}
                      
         self.data_serial_no = serial_number
         self.kernel_timestamp = float(kernel_timestamp_seconds) \
@@ -210,15 +213,58 @@ class Interrogator(object):
         for n in range(datapoints):
             (self.sensors[n].wavelength,) = struct.unpack("<I", data[n*4:(n+1)*4])
             self.sensors[n].wavelength /= granularity
+        if self.append_data:
+            self.do_append_data()
                 
-    def add_sensors(self, properties_file="Config/fbg_properties.json"):
+    def create_sensors_from_file(self, properties_file="Config/fbg_properties.json"):
         with open(properties_file) as f:
-            sensor_props = json.load(f)
-        self.sensors = [None]*len(sensor_props)
-        for sensor_name, properties in sensor_props.items():
-            self.sensors[properties["position"]] = Sensor(sensor_name)
-        for sensor in self.sensors:
-            sensor.read_properties(properties_file)
+            self.fbg_properties = json.load(f)
+        self.create_sensors()
+    
+    def create_sensors(self, fbg_props=None):
+        if fbg_props:
+            self.fbg_properties = fbg_props
+        self.sensors = [None]*len(self.fbg_properties)
+        for name, props in self.fbg_properties.items():
+            self.sensors[props["position"]] = Sensor(name, properties=props)
+            
+    def setup_append_data(self):
+        self.create_data_dict()
+        self.append_data = True
+            
+    def create_data_dict(self):
+        """Technically this just creates new items rather than a new dict."""
+        self.data.clear()
+        for s in self.sensors:
+            self.data[s.name + "_wavelength"] = np.array([])
+            self.data[s.name + "_" + s.type] = np.array([])
+            self.data["timestamp"] = np.array([])
+            self.data["time"] = np.array([])
+            self.data["serial_no"] = np.array([])
+            
+    def do_append_data(self):
+        self.data["timestamp"] = np.append(self.data["timestamp"], 
+                                           self.kernel_timestamp)
+        self.data["serial_no"] = np.append(self.data["serial_no"],
+                                           self.data_serial_no)
+        if len(self.data["time"]) == 0:
+            newtime = 0.0
+        else:
+            delta_t = self.data["timestamp"][-1] - self.data["timestamp"][-2]
+            newtime = self.data["time"][-1] + delta_t
+        self.data["time"] = np.append(self.data["time"], newtime)
+        for s in self.sensors:
+            self.data[s.name + "_wavelength"] = np.append(self.data[s.name + "_wavelength"],
+                                                          s.wavelength)
+            if s.type == "strain":
+                self.data[s.name + "_strain"] = np.append(self.data[s.name + "_strain"],
+                                                          s.strain)
+            elif s.type == "temperature":
+                self.data[s.name + "_temperature"] = np.append(self.data[s.name + "_temperature"],
+                                                               s.temperature)
+                                                               
+    def sleep(self):
+        time.sleep(1/self.sample_rate/2)
             
     def zero_strain_sensors(self):
         self.get_data()
@@ -254,9 +300,9 @@ class Interrogator(object):
         
 
 class Sensor(object):
-    def __init__(self, sensor_name):
-        self.name = sensor_name
-        self.properties = {}
+    def __init__(self, name, properties=None):
+        self.name = name
+        self.properties = properties
         self.position = None
         self.type = None
         self.part_no = None
@@ -276,11 +322,12 @@ class Sensor(object):
         self.cal_coeff_3 = None
         self.cal_coeff_0 = None
         self.temp_sens = None
-    
-    def read_properties(self, filename="Config/fbg_properties.json"):
-        """Reads the properties in JSON format from the given file."""
-        with open(filename) as f:
-            self.properties = json.load(f)[self.name]
+        if self.properties:
+            self.load_properties()
+            
+    def load_properties(self, properties=None):
+        if properties:
+            self.properties = properties
         self.type = self.properties["sensor type"]
         self.position = self.properties["position"]
         self.part_no = self.properties["part number"]
@@ -299,7 +346,12 @@ class Sensor(object):
             self.cal_coeff_1 = self.properties["calibration coeff. 1"]
             self.cal_coeff_2 = self.properties["calibration coeff. 2"]
             self.cal_coeff_3 = self.properties["calibration coeff. 3"]
-            self.temp_sens = self.properties["temp. sensitivity"]
+            self.temp_sens = self.properties["temp. sensitivity"]        
+    
+    def load_properties_from_file(self, filename="Config/fbg_properties.json"):
+        """Reads the properties in JSON format from the given file."""
+        with open(filename) as f:
+            self.properties = json.load(f)[self.name]
         
     @property
     def strain(self):
@@ -328,7 +380,7 @@ def test_connection():
     interr = Interrogator()
     interr.connect()
     print(interr.idn)
-#    interr.get_data()
+    interr.get_data()
     print(interr.capabilities)
     interr.who()
     interr.disconnect()
@@ -337,37 +389,26 @@ def test_continuous(test_dur=5):
     import matplotlib.pyplot as plt
     interr = Interrogator()
     interr.connect()
-    interr.add_sensors("test/fbg_properties.json")
+    interr.create_sensors_from_file("test/fbg_properties.json")
     interr.zero_strain_sensors()
-    t_array = []
-    data1 = []
-    data2 = []
-    serial_no = []
-    t = 0.0
+    data = interr.data
+    interr.setup_append_data()
     t0 = time.time()
-    while t < test_dur:
-        t = time.time() - t0
+    while time.time() - t0 < test_dur:
         interr.get_data()
-        t_array.append(interr.kernel_timestamp)
-        data1.append(interr.sensors[0].temperature)
-        data2.append(interr.sensors[1].strain)
-        serial_no.append(interr.data_serial_no)
-        time.sleep(0.0005)
-    for i, s in enumerate(serial_no):
-        if i < len(serial_no) - 1:
-            if serial_no[i + 1] - s != 1:
-                print("Datapoint {} is not sequential".format(i))
-    t_array = np.asarray(t_array)
-    t_array -= t_array[0]
-    plt.plot(t_array, data2)
+        interr.sleep()
+    t = data["time"]
+    data1 = data[interr.sensors[0].name + "_temperature"]
+    data2 = data[interr.sensors[1].name + "_strain"]
+    plt.plot(t, data2)
     plt.xlabel("t (s)")
     plt.ylabel(r"$\mu$-strain")
     plt.figure()
-    plt.plot(t_array, data1)
+    plt.plot(t, data1)
     plt.xlabel("t (s)")
     plt.ylabel("T (deg. C)")
     interr.disconnect()
-    return t_array, serial_no, data1, data2
+    return data
     
 def test_sensor_class(name="os4300"):
     sensor = Sensor(name)
@@ -401,8 +442,8 @@ def terminal(ip_address="192.168.1.166", port=1852):
     s.close()
 
 if __name__ == "__main__":
-    test_connection()
-#    t, serial_no, data1, data2 = test_continuous(test_dur=10)
+#    test_connection()
+    data = test_continuous(test_dur=1)
 #    test_sensor_class()
 #    test_add_sensors()
     
