@@ -215,7 +215,7 @@ class Interrogator(object):
                 (sensor.wavelength,) = struct.unpack("<I", data[n*4:(n+1)*4])
                 sensor.wavelength /= granularity
             except:
-                sensor.wavelength = np.nan
+                sensor.wavelength = []
         if self.append_data:
             self.do_append_data()
                 
@@ -452,7 +452,7 @@ def terminal(ip_address="192.168.1.166", port=1852):
 
 if __name__ == "__main__":
 #    test_connection()
-    data = test_continuous(test_dur=10, trigger=True)
+    data = test_continuous(test_dur=2, trigger=True)
 #    test_sensor_class()
 #    test_add_sensors()
     
