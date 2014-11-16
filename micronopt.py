@@ -70,6 +70,76 @@ class Interrogator(object):
             raise ValueError("Invalid value for triggering mode.")
             
     @property
+    def trig_start_edge(self):
+        self.send_command("GET_TRIG_START_EDGE")
+        return(int(self.latest_response))
+    @trig_start_edge.setter
+    def trig_start_edge(self, value):
+        """0 for rising, 1 for falling."""
+        self.send_command("SET_TRIG_START_EDGE {}".format(value))
+        
+    @property
+    def trig_stop_type(self):
+        self.send_command("GET_TRIG_STOP_TYPE")
+        return(int(self.latest_response))
+    @trig_stop_type.setter
+    def trig_stop_type(self, value):
+        """0 for # acquisitions and 1 for edge triggering."""
+        self.send_command("SET_TRIG_STOP_TYPE {}".format(value))
+        
+    @property
+    def trig_stop_edge(self):
+        self.send_command("GET_TRIG_STOP_EDGE")
+        return(int(self.latest_response))
+    @trig_stop_edge.setter
+    def trig_stop_edge(self, value):
+        """0 for rising and 1 for falling."""
+        self.send_command("SET_TRIG_STOP_EDGE {}".format(value))
+        
+    @property
+    def trig_num_acq(self):
+        self.send_command("GET_TRIG_NUM_ACQ")
+        return(int(self.latest_response))
+    @trig_num_acq.setter
+    def trig_num_acq(self, value):
+        """Sets the number of acquisitions following a trigger."""
+        self.send_command("SET_TRIG_NUM_ACQ {}".format(value))
+        
+    @property
+    def auto_retrig(self):
+        self.send_command("GET_AUTO_RETRIG")
+        return(int(self.latest_response))
+    @auto_retrig.setter
+    def auto_retrig(self, value):
+        """0 for off, 1 for on."""
+        self.send_command("SET_AUTO_RETRIG {}".format(value))
+        
+    def sw_trig_start(self):
+        """This command initiates a software start trigger to the x30 core in 
+        S/W triggering mode. The command can also be used to simulate a 
+        hardware trigger start when the module is set to hardware triggering 
+        mode."""
+        self.send_command("SW_TRIG_START")
+        
+    def sw_trig_stop(self):
+        """This command initiates a software stop trigger to the x30 core in 
+        S/W triggering mode. The command can also be used to simulate a 
+        hardware trigger stop when the module is set to hardware triggering 
+        mode."""
+        self.send_command("SW_TRIG_STOP")
+        
+    def set_trigger_defaults(self):
+        """Sets default trigger settings:
+          * Hardware triggered by rising edge
+          * Stop after falling edge
+          * Automatic retriggering on."""
+        self.trig_mode = 3
+        self.trig_start_edge = 0
+        self.trig_stop_type = 1
+        self.trig_stop_edge = 1
+        self.auto_retrig = 0
+            
+    @property
     def capabilities(self):
         self.send_command("GET_CAPABILITIES")
         resp = int(self.latest_response)
@@ -93,6 +163,24 @@ class Interrogator(object):
     @ch1_noise_thresh.setter
     def ch1_noise_thresh(self, val):
         self.send_command("SET_CH_NOISE_THRESH 1 {}".format(val))
+        
+    @property 
+    def data_interleave(self):
+        self.send_command("GET_DATA_INTERLEAVE")
+        return(int(self.latest_response))
+    @data_interleave.setter
+    def data_interleave(self, value):
+        self.send_command("SET_DATA_INTERLEAVE {}".format(value))
+        
+    @property
+    def data_rate_divider(self):
+        self.send_command("GET_DATA_RATE_DIVIDER")
+        return(int(self.latest_response))
+    @data_rate_divider.setter
+    def data_rate_divider(self, value):
+        self.send_command("SET_DATA_RATE_DIVIDER {}".format(value))
+        if self.latest_response.decode() == "Data rate divider set to {}".format(value):
+            self.sample_rate = 1000/value
             
     def get_data(self):
         self.send_command("GET_DATA")
@@ -215,9 +303,18 @@ class Interrogator(object):
                 (sensor.wavelength,) = struct.unpack("<I", data[n*4:(n+1)*4])
                 sensor.wavelength /= granularity
             except:
-                sensor.wavelength = []
+                sensor.wavelength = np.nan
         if self.append_data:
             self.do_append_data()
+            
+    def flush_buffer(self):
+        self.send_command("FLUSH_BUFFER")
+        
+    def enable_buffer(self):
+        self.send_command("SET_BUFFER_ENABLE 1")
+        
+    def disable_buffer(self):
+        self.send_command("SET_BUFFER_ENABLE 0")
                 
     def create_sensors_from_file(self, properties_file="Config/fbg_properties.json"):
         with open(properties_file) as f:
@@ -234,6 +331,7 @@ class Interrogator(object):
     def setup_append_data(self):
         self.create_data_dict()
         self.append_data = True
+        self.flush_buffer()
             
     def create_data_dict(self):
         """Technically this just creates new items rather than a new dict."""
@@ -394,7 +492,7 @@ def test_continuous(test_dur=5, trigger=False):
     interr.connect()
     interr.create_sensors_from_file("test/fbg_properties.json")
     if trigger:
-        interr.trig_mode = 2
+        interr.set_trigger_defaults()
     interr.zero_strain_sensors()
     data = interr.data
     interr.setup_append_data()
@@ -452,7 +550,7 @@ def terminal(ip_address="192.168.1.166", port=1852):
 
 if __name__ == "__main__":
 #    test_connection()
-    data = test_continuous(test_dur=2, trigger=True)
+    data = test_continuous(test_dur=10, trigger=True)
 #    test_sensor_class()
 #    test_add_sensors()
     
