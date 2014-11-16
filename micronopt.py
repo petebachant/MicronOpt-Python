@@ -304,7 +304,7 @@ class Interrogator(object):
                 sensor.wavelength /= granularity
             except:
                 sensor.wavelength = np.nan
-        if self.append_data:
+        if self.append_data and acq_triggered:
             self.do_append_data()
             
     def flush_buffer(self):
@@ -331,7 +331,6 @@ class Interrogator(object):
     def setup_append_data(self):
         self.create_data_dict()
         self.append_data = True
-        self.flush_buffer()
             
     def create_data_dict(self):
         """Technically this just creates new items rather than a new dict."""
@@ -371,7 +370,10 @@ class Interrogator(object):
         self.get_data()
         for sensor in self.sensors:
             if sensor.type == "strain":
-                sensor.initial_wavelength = sensor.wavelength
+                if not np.isnan(sensor.wavelength):
+                    sensor.initial_wavelength = sensor.wavelength
+                else:
+                    sensor.initial_wavelenth = sensor.nominal_wavelength
     
     def save_settings(self):
         self.send_command("SAVE_SETTINGS")
@@ -486,13 +488,11 @@ def test_connection():
     interr.who()
     interr.disconnect()
     
-def test_continuous(test_dur=5, trigger=False):
+def test_continuous(test_dur=5):
     import matplotlib.pyplot as plt
     interr = Interrogator()
     interr.connect()
     interr.create_sensors_from_file("test/fbg_properties.json")
-    if trigger:
-        interr.set_trigger_defaults()
     interr.zero_strain_sensors()
     data = interr.data
     interr.setup_append_data()
@@ -514,8 +514,36 @@ def test_continuous(test_dur=5, trigger=False):
     interr.disconnect()
     return data
     
-def test_continous_hwtrigger():
-    test_continuous(trigger=True)
+def test_continuous_hwtrigger(test_dur=5):
+    import matplotlib.pyplot as plt
+    interr = Interrogator()
+    interr.connect()
+    interr.create_sensors_from_file("test/fbg_properties.json")
+    interr.set_trigger_defaults()
+    interr.zero_strain_sensors()
+    data = interr.data
+    interr.setup_append_data()
+    t0 = time.time()
+    while time.time() - t0 < test_dur:
+        interr.get_data()
+        interr.sleep()
+    t = data["time"]
+    data1 = data[interr.sensors[0].name + "_temperature"]
+    data2 = data[interr.sensors[1].name + "_strain"]
+    try:
+        data2 -= data2[0]
+    except IndexError:
+        pass
+    plt.plot(t, data2)
+    plt.xlabel("t (s)")
+    plt.ylabel(r"$\mu$-strain")
+    plt.figure()
+    plt.plot(t, data1)
+    plt.xlabel("t (s)")
+    plt.ylabel("T (deg. C)")
+    print(interr.data_header)
+    interr.disconnect()
+    return data
     
 def test_sensor_class(name="os4300"):
     sensor = Sensor(name)
@@ -550,7 +578,8 @@ def terminal(ip_address="192.168.1.166", port=1852):
 
 if __name__ == "__main__":
 #    test_connection()
-    data = test_continuous(test_dur=10, trigger=True)
+#    data = test_continuous(test_dur=4)
+    data = test_continuous_hwtrigger(test_dur=5)
 #    test_sensor_class()
 #    test_add_sensors()
     
