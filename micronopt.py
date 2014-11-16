@@ -187,6 +187,20 @@ class Interrogator(object):
         if self.latest_response.decode() == "Data rate divider set to {}".format(value):
             self.sample_rate = 1000/value
             
+    def get_num_averages(self, channel_no, sensor_no):
+        self.send_command("GET_NUM_AVERAGES {} {}".format(channel_no, sensor_no))
+        return(int(self.latest_response))
+        
+    def set_num_averages(self, avgs, channel_no="", sensor_no=""):
+        if channel_no:
+            channel_no += " "
+        if sensor_no:
+            sensor_no += " "
+        self.send_command("SET_NUM_AVERAGES " + str(channel_no) \
+                          + str(sensor_no) + str(avgs))
+        if self.latest_response.decode().split()[0] != "Setting":
+            print("Failed to set number of averages")
+            
     def get_data(self):
         self.send_command("GET_DATA")
         status_header = self.latest_response[:88]

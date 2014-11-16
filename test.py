@@ -26,7 +26,8 @@ def test_continuous(test_dur=5):
     data = interr.data
     interr.setup_append_data()
     interr.data_rate_divider = 1
-    interr.data_interleave = 5
+    interr.data_interleave = 10
+    interr.set_num_averages(10)
     print(interr.data_rate_divider)
     print(interr.data_interleave)
     t0 = time.time()
