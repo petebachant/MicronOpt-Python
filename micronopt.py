@@ -135,12 +135,12 @@ class Interrogator(object):
           * Automatic retriggering on."""
         if on:
             self.trig_mode = 3
+            self.trig_start_edge = 0
+            self.trig_stop_type = 1
+            self.trig_stop_edge = 1
+            self.auto_retrig = 0
         else:
             self.trig_mode = 0
-        self.trig_start_edge = 0
-        self.trig_stop_type = 1
-        self.trig_stop_edge = 1
-        self.auto_retrig = 0
             
     @property
     def capabilities(self):
@@ -307,7 +307,7 @@ class Interrogator(object):
                 sensor.wavelength /= granularity
             except:
                 sensor.wavelength = np.nan
-        if self.append_data and acq_triggered:
+        if self.append_data and (acq_triggered or self.trig_mode == 0):
             self.do_append_data()
             
     def flush_buffer(self):
