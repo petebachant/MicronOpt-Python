@@ -30,6 +30,7 @@ def test_continuous(test_dur=5):
     interr.set_num_averages(10)
     print(interr.data_rate_divider)
     print(interr.data_interleave)
+    print(interr.get_num_averages(1, 1))
     t0 = time.time()
     while time.time() - t0 < test_dur:
         interr.get_data()
