@@ -6,6 +6,7 @@ Created on Sun Nov 16 17:35:49 2014
 """
 
 from micronopt import Interrogator, Sensor
+import time
 
 def test_connection():
     interr = Interrogator()
