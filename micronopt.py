@@ -128,12 +128,15 @@ class Interrogator(object):
         mode."""
         self.send_command("SW_TRIG_STOP")
         
-    def set_trigger_defaults(self):
+    def set_trigger_defaults(self, on=True):
         """Sets default trigger settings:
           * Hardware triggered by rising edge
           * Stop after falling edge
           * Automatic retriggering on."""
-        self.trig_mode = 3
+        if on:
+            self.trig_mode = 3
+        else:
+            self.trig_mode = 0
         self.trig_start_edge = 0
         self.trig_stop_type = 1
         self.trig_stop_edge = 1
