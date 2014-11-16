@@ -64,6 +64,7 @@ class Interrogator(object):
         return int(self.latest_response)
     @trig_mode.setter
     def trig_mode(self, mode):
+        """Mode=0 for untriggered, 1 for S/W triggered, and 3 for H/W triggered."""
         self.send_command("SET_TRIG_MODE {}".format(mode))
         if self.latest_response.decode() != "Setting triggering mode to {}.\n".format(mode):
             raise ValueError("Invalid value for triggering mode.")
@@ -209,10 +210,12 @@ class Interrogator(object):
         self.kernel_timestamp = float(kernel_timestamp_seconds) \
                                 + float(kernel_timestamp_microseconds)*1e-6
         
-        datapoints = len(data)//4
-        for n in range(datapoints):
-            (self.sensors[n].wavelength,) = struct.unpack("<I", data[n*4:(n+1)*4])
-            self.sensors[n].wavelength /= granularity
+        for n, sensor in enumerate(self.sensors):
+            try:
+                (sensor.wavelength,) = struct.unpack("<I", data[n*4:(n+1)*4])
+                sensor.wavelength /= granularity
+            except:
+                sensor.wavelength = np.nan
         if self.append_data:
             self.do_append_data()
                 
@@ -385,11 +388,13 @@ def test_connection():
     interr.who()
     interr.disconnect()
     
-def test_continuous(test_dur=5):
+def test_continuous(test_dur=5, trigger=False):
     import matplotlib.pyplot as plt
     interr = Interrogator()
     interr.connect()
     interr.create_sensors_from_file("test/fbg_properties.json")
+    if trigger:
+        interr.trig_mode = 2
     interr.zero_strain_sensors()
     data = interr.data
     interr.setup_append_data()
@@ -407,8 +412,12 @@ def test_continuous(test_dur=5):
     plt.plot(t, data1)
     plt.xlabel("t (s)")
     plt.ylabel("T (deg. C)")
+    print(interr.data_header)
     interr.disconnect()
     return data
+    
+def test_continous_hwtrigger():
+    test_continuous(trigger=True)
     
 def test_sensor_class(name="os4300"):
     sensor = Sensor(name)
@@ -443,7 +452,7 @@ def terminal(ip_address="192.168.1.166", port=1852):
 
 if __name__ == "__main__":
 #    test_connection()
-    data = test_continuous(test_dur=1)
+    data = test_continuous(test_dur=10, trigger=True)
 #    test_sensor_class()
 #    test_add_sensors()
     
