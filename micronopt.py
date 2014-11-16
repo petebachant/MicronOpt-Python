@@ -174,6 +174,8 @@ class Interrogator(object):
     @data_interleave.setter
     def data_interleave(self, value):
         self.send_command("SET_DATA_INTERLEAVE {}".format(value))
+        if self.latest_response.decode() == "Data interleave set to {}".format(value):
+            self.sample_rate = 1000/value
         
     @property
     def data_rate_divider(self):
@@ -482,84 +484,6 @@ class Sensor(object):
             return None
 
 
-def test_connection():
-    interr = Interrogator()
-    interr.connect()
-    print(interr.idn)
-    interr.get_data()
-    print(interr.capabilities)
-    interr.who()
-    interr.disconnect()
-    
-def test_continuous(test_dur=5):
-    import matplotlib.pyplot as plt
-    interr = Interrogator()
-    interr.connect()
-    interr.create_sensors_from_file("test/fbg_properties.json")
-    interr.zero_strain_sensors()
-    data = interr.data
-    interr.setup_append_data()
-    t0 = time.time()
-    while time.time() - t0 < test_dur:
-        interr.get_data()
-        interr.sleep()
-    t = data["time"]
-    data1 = data[interr.sensors[0].name + "_temperature"]
-    data2 = data[interr.sensors[1].name + "_strain"]
-    plt.plot(t, data2)
-    plt.xlabel("t (s)")
-    plt.ylabel(r"$\mu$-strain")
-    plt.figure()
-    plt.plot(t, data1)
-    plt.xlabel("t (s)")
-    plt.ylabel("T (deg. C)")
-    print(interr.data_header)
-    interr.disconnect()
-    return data
-    
-def test_continuous_hwtrigger(test_dur=5):
-    import matplotlib.pyplot as plt
-    interr = Interrogator()
-    interr.connect()
-    interr.create_sensors_from_file("test/fbg_properties.json")
-    interr.set_trigger_defaults()
-    interr.zero_strain_sensors()
-    data = interr.data
-    interr.setup_append_data()
-    t0 = time.time()
-    while time.time() - t0 < test_dur:
-        interr.get_data()
-        interr.sleep()
-    t = data["time"]
-    data1 = data[interr.sensors[0].name + "_temperature"]
-    data2 = data[interr.sensors[1].name + "_strain"]
-    try:
-        data2 -= data2[0]
-    except IndexError:
-        pass
-    plt.plot(t, data2)
-    plt.xlabel("t (s)")
-    plt.ylabel(r"$\mu$-strain")
-    plt.figure()
-    plt.plot(t, data1)
-    plt.xlabel("t (s)")
-    plt.ylabel("T (deg. C)")
-    print(interr.data_header)
-    interr.disconnect()
-    return data
-    
-def test_sensor_class(name="os4300"):
-    sensor = Sensor(name)
-    sensor.read_properties("test/fbg_properties.json")
-    print(sensor.name)
-    
-def test_add_sensors():
-    micron = Interrogator()
-    micron.add_sensors("test/fbg_properties.json")
-    for sensor in micron.sensors:
-        print(sensor.name)
-        print(sensor.properties)
-
 def terminal(ip_address="192.168.1.166", port=1852):
     """Creates a communcation terminal to send commands."""
     if sys.version_info >= (3, 0):
@@ -580,9 +504,5 @@ def terminal(ip_address="192.168.1.166", port=1852):
     s.close()
 
 if __name__ == "__main__":
-#    test_connection()
-#    data = test_continuous(test_dur=4)
-    data = test_continuous_hwtrigger(test_dur=5)
-#    test_sensor_class()
-#    test_add_sensors()
+    pass
     
