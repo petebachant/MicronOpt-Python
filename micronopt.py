@@ -24,6 +24,7 @@ class Interrogator(object):
             self.create_sensors(fbg_props)
         self.sample_rate = 1000
         self.append_data = False
+        self.stream_data = False
         self.data = {}
     
     def connect(self):
@@ -202,9 +203,20 @@ class Interrogator(object):
             print("Failed to set number of averages")
             
     def get_data(self):
-        self.send_command("GET_DATA")
-        status_header = self.latest_response[:88]
-        data = self.latest_response[88:]
+        if self.stream_data:
+            respsize = int(self.streaming_socket.recv(10))
+            response = self.streaming_socket.recv(respsize)
+            if self.stream_iteration < 1:
+                token = self.streaming_socket.recv(8)
+            else:
+                token = response[-8:]
+                response = response[:-8]
+            self.stream_iteration += 1
+        else:
+            self.send_command("GET_DATA")
+            response = self.latest_response
+        status_header = response[:88]
+        data = response[88:]
         # unpack the struct into variables
         (
             fs_radix, cur_layer, fw_ver, abcde, #  0 fixed
@@ -346,6 +358,18 @@ class Interrogator(object):
         self.sensors = [None]*len(self.fbg_properties)
         for name, props in self.fbg_properties.items():
             self.sensors[props["position"]] = Sensor(name, properties=props)
+            
+    def setup_streaming(self):
+        self.setup_append_data()
+        self.streaming_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.streaming_socket.connect((self.ip_address, self.port))
+        command = "#SET_STREAMING_DATA 1\n"
+        self.streaming_socket.send(command.encode("ascii"))
+        respsize = int(self.streaming_socket.recv(10))
+        response = self.streaming_socket.recv(respsize)
+        print(response)
+        self.stream_data = True
+        self.stream_iteration = 0
             
     def setup_append_data(self):
         self.create_data_dict()

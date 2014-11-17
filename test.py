@@ -17,11 +17,12 @@ def test_connection():
     interr.who()
     interr.disconnect()
     
-def test_continuous(test_dur=5):
+def test_continuous(test_dur=3):
     import matplotlib.pyplot as plt
     interr = Interrogator()
     interr.connect()
     interr.create_sensors_from_file("test/fbg_properties.json")
+    interr.set_trigger_defaults(False)
     interr.zero_strain_sensors()
     data = interr.data
     interr.setup_append_data()
@@ -49,7 +50,7 @@ def test_continuous(test_dur=5):
     interr.disconnect()
     return data
     
-def test_continuous_hwtrigger(test_dur=5):
+def test_continuous_hwtrigger(test_dur=3):
     import matplotlib.pyplot as plt
     interr = Interrogator()
     interr.connect()
@@ -58,6 +59,39 @@ def test_continuous_hwtrigger(test_dur=5):
     interr.zero_strain_sensors()
     data = interr.data
     interr.setup_append_data()
+    t0 = time.time()
+    while time.time() - t0 < test_dur:
+        interr.get_data()
+        interr.sleep()
+    t = data["time"]
+    data1 = data[interr.sensors[0].name + "_temperature"]
+    data2 = data[interr.sensors[1].name + "_strain"]
+    try:
+        data2 -= data2[0]
+    except IndexError:
+        pass
+    plt.plot(t, data2)
+    plt.xlabel("t (s)")
+    plt.ylabel(r"$\mu$-strain")
+    plt.figure()
+    plt.plot(t, data1)
+    plt.xlabel("t (s)")
+    plt.ylabel("T (deg. C)")
+    print(interr.data_header)
+    interr.disconnect()
+    return data
+    
+def test_streaming(test_dur=2):
+    import matplotlib.pyplot as plt
+    interr = Interrogator()
+    interr.connect()
+    interr.create_sensors_from_file("test/fbg_properties.json")
+    interr.set_trigger_defaults(False)
+    interr.zero_strain_sensors()
+    interr.data_interleave = 1
+    interr.set_num_averages(1)
+    interr.setup_streaming()
+    data = interr.data
     t0 = time.time()
     while time.time() - t0 < test_dur:
         interr.get_data()
@@ -93,4 +127,5 @@ def test_add_sensors():
         print(sensor.properties)
         
 if __name__ == "__main__":
-    data = test_continuous()
+#    data = test_continuous()
+    data = test_streaming(8)
