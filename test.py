@@ -26,9 +26,8 @@ def test_continuous(test_dur=3):
     interr.zero_strain_sensors()
     data = interr.data
     interr.setup_append_data()
-    interr.data_rate_divider = 1
-    interr.data_interleave = 10
-    interr.set_num_averages(10)
+    interr.data_interleave = 2
+    interr.num_averages = 2
     print(interr.data_rate_divider)
     print(interr.data_interleave)
     print(interr.get_num_averages(1, 1))
@@ -88,8 +87,8 @@ def test_streaming(test_dur=2):
     interr.create_sensors_from_file("test/fbg_properties.json")
     interr.set_trigger_defaults(False)
     interr.zero_strain_sensors()
-    interr.data_interleave = 1
-    interr.set_num_averages(1)
+    interr.data_interleave = 2
+    interr.set_num_averages = 2
     interr.setup_streaming()
     data = interr.data
     t0 = time.time()
@@ -127,5 +126,5 @@ def test_add_sensors():
         print(sensor.properties)
         
 if __name__ == "__main__":
-#    data = test_continuous()
-    data = test_streaming(8)
+#    data = test_continuous(10)
+    data = test_streaming(10)

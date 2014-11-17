@@ -188,6 +188,15 @@ class Interrogator(object):
         if self.latest_response.decode() == "Data rate divider set to {}".format(value):
             self.sample_rate = 1000/value
             
+    @property
+    def num_averages(self):
+        """Gets number of averages for the first sensor on the first channel."""
+        return self.get_num_averages(1, 1)
+    @num_averages.setter
+    def num_averages(self, value):
+        """Sets num averages for all sensors on all channels."""
+        self.set_num_averages(value)
+            
     def get_num_averages(self, channel_no, sensor_no):
         self.send_command("GET_NUM_AVERAGES {} {}".format(channel_no, sensor_no))
         return(int(self.latest_response))
@@ -359,7 +368,7 @@ class Interrogator(object):
         for name, props in self.fbg_properties.items():
             self.sensors[props["position"]] = Sensor(name, properties=props)
             
-    def setup_streaming(self):
+    def setup_streaming(self, verbose=False):
         self.setup_append_data()
         self.streaming_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.streaming_socket.connect((self.ip_address, self.port))
@@ -367,7 +376,8 @@ class Interrogator(object):
         self.streaming_socket.send(command.encode("ascii"))
         respsize = int(self.streaming_socket.recv(10))
         response = self.streaming_socket.recv(respsize)
-        print(response)
+        if verbose:
+            print(response)
         self.stream_data = True
         self.stream_iteration = 0
             
@@ -407,7 +417,7 @@ class Interrogator(object):
                                                                s.temperature)
                                                                
     def sleep(self):
-        time.sleep(1/self.sample_rate/2)
+        time.sleep(1/self.sample_rate/4)
             
     def zero_strain_sensors(self):
         self.get_data()
