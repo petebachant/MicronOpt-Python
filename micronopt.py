@@ -417,7 +417,7 @@ class Interrogator(object):
                                                                s.temperature)
                                                                
     def sleep(self):
-        time.sleep(1/self.sample_rate/4)
+        time.sleep(1/self.sample_rate/2)
             
     def zero_strain_sensors(self):
         self.get_data()
