@@ -390,7 +390,10 @@ class Interrogator(object):
         self.data.clear()
         for s in self.sensors:
             self.data[s.name + "_wavelength"] = np.array([])
-            self.data[s.name + "_" + s.type] = np.array([])
+            if "strain" in s.type:
+                self.data[s.name + "_strain"] = np.array([])
+            else:
+                self.data[s.name + "_" + s.type] = np.array([])
             self.data["timestamp"] = np.array([])
             self.data["time"] = np.array([])
             self.data["serial_no"] = np.array([])
@@ -409,7 +412,7 @@ class Interrogator(object):
         for s in self.sensors:
             self.data[s.name + "_wavelength"] = np.append(self.data[s.name + "_wavelength"],
                                                           s.wavelength)
-            if s.type == "strain":
+            if s.type == "strain" or s.type == "bare strain":
                 self.data[s.name + "_strain"] = np.append(self.data[s.name + "_strain"],
                                                           s.strain)
             elif s.type == "temperature":
@@ -486,14 +489,23 @@ class Sensor(object):
             self.properties = properties
         self.type = self.properties["sensor type"]
         self.position = self.properties["position"]
-        self.part_no = self.properties["part number"]
-        self.serial_no = self.properties["serial number"]
+        try:
+            self.part_no = self.properties["part number"]
+        except KeyError:
+            pass
+        try:
+            self.serial_no = self.properties["serial number"]
+        except:
+            pass
         self.nominal_wavelength = self.properties["nominal wavelength"]
         if self.type == "strain":
             self.gage_factor = self.properties["gage factor"]
             self.gage_constant_1 = self.properties["gage constant 1"]
             self.gage_constant_2 = self.properties["gage constant 2"]
             self.cte_specimen = self.properties["CTE of test specimen"]
+            self.initial_wavelength = self.nominal_wavelength
+        elif self.type == "bare strain":
+            self.ke = self.properties["ke"]
             self.initial_wavelength = self.nominal_wavelength
         elif self.type == "temperature":
             self.temp_at_nom_wavelength = self.properties["temperature at nominal wavelength"]
@@ -516,8 +528,11 @@ class Sensor(object):
             self.thermal_output = self.temperature_change*\
                     (self.gage_constant_1/self.gage_factor + self.cte_specimen\
                     - self.gage_constant_2) 
-            return (self.wavelength_shift/self.nominal_wavelength)\
+            return (self.wavelength_shift/self.initial_wavelength)\
                     *1e6/self.gage_factor - self.thermal_output
+        elif self.type.lower() == "bare strain":
+            self.wavelength_shift = self.wavelength - self.initial_wavelength
+            return self.wavelength_shift/self.initial_wavelength/self.ke
         else:
             return None
             

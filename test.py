@@ -26,8 +26,8 @@ def test_continuous(test_dur=3):
     interr.zero_strain_sensors()
     data = interr.data
     interr.setup_append_data()
-    interr.data_interleave = 2
-    interr.num_averages = 2
+    interr.data_interleave = 1
+    interr.num_averages = 1
     print(interr.data_rate_divider)
     print(interr.data_interleave)
     print(interr.get_num_averages(1, 1))
@@ -36,15 +36,15 @@ def test_continuous(test_dur=3):
         interr.get_data()
         interr.sleep()
     t = data["time"]
-    data1 = data[interr.sensors[0].name + "_temperature"]
-    data2 = data[interr.sensors[1].name + "_strain"]
+    data1 = data[interr.sensors[0].name + "_wavelength"]
+    data2 = data[interr.sensors[1].name + "_wavelength"]
     plt.plot(t, data2)
     plt.xlabel("t (s)")
-    plt.ylabel(r"$\mu$-strain")
+    plt.ylabel(r"Wavelength")
     plt.figure()
     plt.plot(t, data1)
     plt.xlabel("t (s)")
-    plt.ylabel("T (deg. C)")
+    plt.ylabel("Wavelength")
     print(interr.data_header)
     interr.disconnect()
     return data
@@ -126,5 +126,5 @@ def test_add_sensors():
         print(sensor.properties)
         
 if __name__ == "__main__":
-#    data = test_continuous(10)
-    data = test_streaming(10)
+    data = test_continuous(3)
+#    data = test_streaming(10)
