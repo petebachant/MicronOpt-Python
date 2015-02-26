@@ -131,15 +131,15 @@ class Interrogator(object):
         
     def set_trigger_defaults(self, on=True):
         """Sets default trigger settings:
-          * Hardware triggered by rising edge
-          * Stop after falling edge
+          * Hardware triggered by falling edge
+          * Stop after rising edge
           * Automatic retriggering on."""
         if on:
             self.trig_mode = 3
-            self.trig_start_edge = 0
+            self.trig_start_edge = 1
             self.trig_stop_type = 1
-            self.trig_stop_edge = 1
-            self.auto_retrig = 0
+            self.trig_stop_edge = 0
+            self.auto_retrig = 1
         else:
             self.trig_mode = 0
             
