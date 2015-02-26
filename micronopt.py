@@ -425,7 +425,7 @@ class Interrogator(object):
     def zero_strain_sensors(self):
         self.get_data()
         for sensor in self.sensors:
-            if sensor.type == "strain":
+            if "strain" in sensor.type:
                 if not np.isnan(sensor.wavelength):
                     sensor.initial_wavelength = sensor.wavelength
                 else:
