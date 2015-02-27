@@ -145,10 +145,14 @@ class Interrogator(object):
     @property
     def auto_retrig(self):
         self.send_command("GET_AUTO_RETRIG")
-        return(int(self.latest_response))
+        return bool(int(self.latest_response))
     @auto_retrig.setter
     def auto_retrig(self, value):
-        """0 for off, 1 for on."""
+        """0/False for off, 1/True for on."""
+        if value == True:
+            value = 1
+        elif value == False:
+            value = 0
         self.send_command("SET_AUTO_RETRIG {}".format(value))
         
     def sw_trig_start(self):
