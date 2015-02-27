@@ -74,7 +74,7 @@ class Interrogator(object):
     @property
     def trig_start_edge(self):
         self.send_command("GET_TRIG_START_EDGE")
-        return(int(self.latest_response))
+        return int(self.latest_response)
     @trig_start_edge.setter
     def trig_start_edge(self, value):
         """0 for rising, 1 for falling."""
@@ -82,17 +82,33 @@ class Interrogator(object):
         
     @property
     def trig_stop_type(self):
+        """
+        This command returns the configured trigger stop event for the 
+        connected x30 core. Either edge stop triggering or fixed number of 
+        acquisitions will be indicated.
+        """
         self.send_command("GET_TRIG_STOP_TYPE")
-        return(int(self.latest_response))
+        return str(self.latest_response)
     @trig_stop_type.setter
     def trig_stop_type(self, value):
-        """0 for # acquisitions and 1 for edge triggering."""
+        """
+        This command sets the trigger stop event from among two choices. The 
+        first choice, indicated with a parameter value of zero, is a stop 
+        trigger upon reaching a number of acquisitions following the start 
+        trigger. The second choice, indicated with a parameter value of 1, is a 
+        stop trigger on presence of another edge signal, be it rising or 
+        falling, as determined by the #SET_TRIG_STOP_EDGE command.
+        """
+        if value == "num_acq":
+            value = 0
+        elif value == "edge":
+            value = 1
         self.send_command("SET_TRIG_STOP_TYPE {}".format(value))
         
     @property
     def trig_stop_edge(self):
         self.send_command("GET_TRIG_STOP_EDGE")
-        return(int(self.latest_response))
+        return int(self.latest_response)
     @trig_stop_edge.setter
     def trig_stop_edge(self, value):
         """0 for rising and 1 for falling."""
@@ -101,7 +117,7 @@ class Interrogator(object):
     @property
     def trig_num_acq(self):
         self.send_command("GET_TRIG_NUM_ACQ")
-        return(int(self.latest_response))
+        return int(self.latest_response)
     @trig_num_acq.setter
     def trig_num_acq(self, value):
         """Sets the number of acquisitions following a trigger."""
@@ -356,6 +372,16 @@ class Interrogator(object):
         
     def disable_buffer(self):
         self.send_command("SET_BUFFER_ENABLE 0")
+        
+    @property
+    def buffer_count(self):
+        """
+        This command returns the number of entries stored in the internal data 
+        buffer for the present socket connection. This value can range from 0 
+        to 60,000 entries.
+        """
+        self.send_command("GET_BUFFER_COUNT")
+        return int(self.latest_response)
                 
     def create_sensors_from_file(self, properties_file="Config/fbg_properties.json"):
         with open(properties_file) as f:
