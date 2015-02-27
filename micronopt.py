@@ -30,14 +30,15 @@ class Interrogator(object):
     def connect(self):
         self.socket.connect((self.ip_address, self.port))
 
-    def send_command(self, command):
+    def send_command(self, command, receive=True):
         if command[0] != "#":
             command = "#" + command
         if command[-1] != "\n":
             command += "\n"
         self.socket.send(command.encode("ascii"))
-        respsize = int(self.socket.recv(10))
-        self.latest_response = self.socket.recv(respsize)
+        if receive:
+            respsize = int(self.socket.recv(10))
+            self.latest_response = self.socket.recv(respsize)
 
     @property
     def idn(self):
