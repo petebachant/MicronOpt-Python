@@ -205,7 +205,7 @@ class Interrogator(object):
             self.trig_start_edge = "rising"
             self.trig_stop_edge = "falling"
             self.trig_stop_type = "edge"
-            self.auto_retrig = True
+            self.auto_retrig = False
             
     @property
     def capabilities(self):
