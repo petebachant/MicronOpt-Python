@@ -107,7 +107,7 @@ class Interrogator(object):
         acquisitions will be indicated.
         """
         self.send_command("GET_TRIG_STOP_TYPE")
-        return str(self.latest_response)
+        return self.latest_response
     @trig_stop_type.setter
     def trig_stop_type(self, value):
         """
