@@ -408,7 +408,8 @@ class Interrogator(object):
                 sensor.wavelength /= granularity
             except:
                 sensor.wavelength = np.nan
-        if self.append_data and (acq_triggered or self.trig_mode == 0):
+        if self.append_data and (acq_triggered or self.trig_mode == \
+                                 "untriggered"):
             self.do_append_data()
             
     def flush_buffer(self, receive=True, verbose=False):
