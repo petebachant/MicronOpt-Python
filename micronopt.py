@@ -374,8 +374,10 @@ class Interrogator(object):
         if self.append_data and (acq_triggered or self.trig_mode == 0):
             self.do_append_data()
             
-    def flush_buffer(self):
-        self.send_command("FLUSH_BUFFER")
+    def flush_buffer(self, receive=True, verbose=False):
+        self.send_command("FLUSH_BUFFER", receive=receive)
+        if verbose and receive:
+            print(self.latest_response)
         
     def enable_buffer(self):
         self.send_command("SET_BUFFER_ENABLE 1")
