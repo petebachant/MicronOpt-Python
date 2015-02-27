@@ -7,6 +7,7 @@ Created on Sun Nov 16 17:35:49 2014
 
 from micronopt import Interrogator, Sensor
 import time
+import matplotlib.pyplot as plt
 
 def test_connection():
     interr = Interrogator()
@@ -18,7 +19,6 @@ def test_connection():
     interr.disconnect()
     
 def test_continuous(test_dur=3):
-    import matplotlib.pyplot as plt
     interr = Interrogator()
     interr.connect()
     interr.create_sensors_from_file("test/fbg_properties.json")
@@ -50,7 +50,6 @@ def test_continuous(test_dur=3):
     return data
     
 def test_continuous_hwtrigger(test_dur=3):
-    import matplotlib.pyplot as plt
     interr = Interrogator()
     interr.connect()
     interr.create_sensors_from_file("test/fbg_properties.json")
@@ -77,7 +76,6 @@ def test_continuous_hwtrigger(test_dur=3):
     return data
     
 def test_num_acq_hwtrigger(test_dur=3):
-    import matplotlib.pyplot as plt
     interr = Interrogator()
     interr.connect()
     interr.flush_buffer()
@@ -110,7 +108,6 @@ def test_num_acq_hwtrigger(test_dur=3):
     return data
     
 def test_streaming(test_dur=2):
-    import matplotlib.pyplot as plt
     interr = Interrogator()
     interr.connect()
     interr.create_sensors_from_file("test/fbg_properties.json")
@@ -154,8 +151,24 @@ def test_add_sensors():
         print(sensor.name)
         print(sensor.properties)
         
+def test_flush_buffer(test_dur=2):
+    interr = Interrogator()
+    interr.connect()
+    interr.create_sensors_from_file("test/fbg_properties.json")
+    interr.set_trigger_defaults(False)
+    interr.zero_strain_sensors()
+    interr.setup_append_data()
+    t0 = time.time()
+    while time.time() - t0 < test_dur:
+        interr.get_data()
+        interr.sleep()
+    print("Current buffer:", interr.buffer_count)
+    interr.flush_buffer(verbose=True)
+    print("Buffer after flushing:", interr.buffer_count)
+        
 if __name__ == "__main__":
 #    data = test_continuous(3)
 #    data = test_streaming(10)
     test_continuous_hwtrigger(10)
 #    test_num_acq_hwtrigger(10)
+    test_flush_buffer()
