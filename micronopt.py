@@ -455,6 +455,9 @@ class Interrogator(object):
             print(response)
         self.stream_data = True
         self.stream_iteration = 0
+        
+    def disable_streaming(self):
+        self.send_command("SET STREAMING DATA 0")
             
     def setup_append_data(self):
         self.create_data_dict()

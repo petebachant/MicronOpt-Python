@@ -4,7 +4,7 @@ Created on Sun Nov 16 17:35:49 2014
 
 @author: Pete
 """
-
+from __future__ import division, print_function
 from micronopt import Interrogator, Sensor
 import time
 import matplotlib.pyplot as plt
@@ -71,6 +71,34 @@ def test_continuous_hwtrigger(test_dur=3):
     plt.plot(t, data2)
     plt.xlabel("t (s)")
     plt.ylabel("T (deg. C)")
+    print(interr.data_header)
+    interr.disconnect()
+    return data
+    
+def test_continuous_swtrigger(test_dur=3):
+    interr = Interrogator()
+    interr.connect()
+    interr.disable_streaming()
+    interr.create_sensors_from_file("test/fbg_properties.json")
+    interr.trig_mode = "software"
+    interr.sw_trig_start()
+    interr.zero_strain_sensors()
+    data = interr.data
+    interr.setup_append_data()
+    t0 = time.time()
+    while time.time() - t0 < test_dur:
+        interr.get_data()
+        interr.sleep()
+    t = data["time"]
+    data2 = data[interr.sensors[1].name + "_wavelength"]
+    try:
+        data2 -= data2[0]
+    except IndexError:
+        pass
+    plt.figure()
+    plt.plot(t, data2)
+    plt.xlabel("t (s)")
+    plt.ylabel("Wavelength (nm)")
     print(interr.data_header)
     interr.disconnect()
     return data
@@ -165,10 +193,19 @@ def test_flush_buffer(test_dur=2):
     print("Current buffer:", interr.buffer_count)
     interr.flush_buffer(verbose=True)
     print("Buffer after flushing:", interr.buffer_count)
+    
+def test_reboot():
+    interr = Interrogator()
+    interr.connect()
+    interr.reboot()
+    interr.disconnect()
         
 if __name__ == "__main__":
-#    data = test_continuous(3)
+#    test_connection()
+#    test_reboot()
+    data = test_continuous(2)
 #    data = test_streaming(10)
-    test_continuous_hwtrigger(10)
+#    test_continuous_hwtrigger(10)
+#    test_continuous_swtrigger(2)
 #    test_num_acq_hwtrigger(10)
-    test_flush_buffer()
+#    test_flush_buffer()
