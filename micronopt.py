@@ -63,7 +63,10 @@ class Interrogator(object):
     @property
     def trig_mode(self):
         self.send_command("GET_TRIG_MODE")
-        return int(self.latest_response)
+        vals = {0: "untriggered",
+                1: "software",
+                3: "hardware"}
+        return vals[int(self.latest_response)]
     @trig_mode.setter
     def trig_mode(self, mode):
         """
