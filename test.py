@@ -56,12 +56,11 @@ def test_continuous_hwtrigger(test_dur=3):
     interr.trig_mode = "untriggered"
     interr.auto_retrig = True
     interr.zero_strain_sensors()
-    interr.flush_buffer()
     interr.trig_mode = "hardware"
     interr.trig_start_edge = "falling"
     interr.trig_stop_type = "edge"
-    interr.trig_stop_edge = "falling"
-    interr.auto_retrig = False
+    interr.trig_stop_edge = "rising"
+    interr.auto_retrig = True
     print(interr.trig_mode)
     interr.setup_append_data()
     data = interr.data
@@ -218,7 +217,7 @@ if __name__ == "__main__":
 #    test_reboot()
 #    data = test_continuous(2)
 #    data = test_streaming(2)
-#    test_continuous_hwtrigger(5)
+    test_continuous_hwtrigger(5)
 #    test_continuous_swtrigger(2)
 #    test_num_acq_hwtrigger(10)
 #    test_flush_buffer()
