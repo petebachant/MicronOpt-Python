@@ -2,10 +2,11 @@
 # coding=utf-8
 
 from distutils.core import setup
+from micronopt import __version__
 
 setup(
     name='MicronOpt',
-    version='0.0.1',
+    version=__version__,
     author='Pete Bachant',
     author_email='petebachant@gmail.com',
     py_modules=['micronopt'],

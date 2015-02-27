@@ -12,6 +12,7 @@ import json
 import sys
 import numpy as np
 
+__version__ = "0.0.2"
     
 class Interrogator(object):
     def __init__(self, ip_address="192.168.1.166", port=1852, fbg_props=None):
