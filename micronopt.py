@@ -108,7 +108,9 @@ class Interrogator(object):
         acquisitions will be indicated.
         """
         self.send_command("GET_TRIG_STOP_TYPE")
-        return self.latest_response
+        vals = {0: "num_acq",
+                1: "edge"}
+        return vals[int(self.latest_response)]
     @trig_stop_type.setter
     def trig_stop_type(self, value):
         """
@@ -200,6 +202,10 @@ class Interrogator(object):
             self.auto_retrig = True
         else:
             self.trig_mode = "untriggered"
+            self.trig_start_edge = "rising"
+            self.trig_stop_edge = "falling"
+            self.trig_stop_type = "edge"
+            self.auto_retrig = True
             
     @property
     def capabilities(self):

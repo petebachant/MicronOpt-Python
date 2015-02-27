@@ -26,8 +26,8 @@ def test_continuous(test_dur=3):
     interr.zero_strain_sensors()
     data = interr.data
     interr.setup_append_data()
-    interr.data_interleave = 1
-    interr.num_averages = 1
+    interr.data_interleave = 2
+    interr.num_averages = 2
     print(interr.data_rate_divider)
     print(interr.data_interleave)
     print(interr.get_num_averages(1, 1))
@@ -54,6 +54,7 @@ def test_continuous_hwtrigger(test_dur=3):
     interr.connect()
     interr.create_sensors_from_file("test/fbg_properties.json")
     interr.set_trigger_defaults()
+    print(interr.trig_mode)
     interr.zero_strain_sensors()
     data = interr.data
     interr.setup_append_data()
@@ -81,6 +82,8 @@ def test_continuous_swtrigger(test_dur=3):
     interr.disable_streaming()
     interr.create_sensors_from_file("test/fbg_properties.json")
     interr.trig_mode = "software"
+    print(interr.trig_mode)
+    print(interr.trig_stop_type)
     interr.sw_trig_start()
     interr.zero_strain_sensors()
     data = interr.data
