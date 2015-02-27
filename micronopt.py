@@ -451,6 +451,9 @@ class Interrogator(object):
         
     def set_date(self, datestring):
         self.send_command("SET_DATE {}".format(datestring))
+        
+    def restart_network(self):
+        self.send_command("RESTART_NETWORK", receive=False)
             
     def reboot(self):
         self.send_command("REBOOT")
