@@ -375,6 +375,11 @@ class Interrogator(object):
             self.do_append_data()
             
     def flush_buffer(self, receive=True, verbose=False):
+        """
+        This command flushes out the contents of the data buffer for the 
+        present socket connection, clearing all data and resetting the buffer 
+        count to zero.
+        """
         self.send_command("FLUSH_BUFFER", receive=receive)
         if verbose and receive:
             print(self.latest_response)
