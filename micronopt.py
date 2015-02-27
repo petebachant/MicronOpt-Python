@@ -127,10 +127,16 @@ class Interrogator(object):
     @property
     def trig_stop_edge(self):
         self.send_command("GET_TRIG_STOP_EDGE")
-        return int(self.latest_response)
+        vals = {0: "rising",
+                1: "falling"}
+        return vals[int(self.latest_response)]
     @trig_stop_edge.setter
     def trig_stop_edge(self, value):
         """0 for rising and 1 for falling."""
+        if value == "rising":
+            value = 0
+        elif value == "falling":
+            value = 1
         self.send_command("SET_TRIG_STOP_EDGE {}".format(value))
         
     @property
@@ -179,13 +185,13 @@ class Interrogator(object):
           * Stop after rising edge
           * Automatic retriggering on."""
         if on:
-            self.trig_mode = 3
-            self.trig_start_edge = 1
-            self.trig_stop_type = 1
-            self.trig_stop_edge = 0
-            self.auto_retrig = 1
+            self.trig_mode = "hardware"
+            self.trig_start_edge = "falling"
+            self.trig_stop_type = "edge"
+            self.trig_stop_edge = "rising"
+            self.auto_retrig = True
         else:
-            self.trig_mode = 0
+            self.trig_mode = "untriggered"
             
     @property
     def capabilities(self):
