@@ -87,10 +87,16 @@ class Interrogator(object):
     @property
     def trig_start_edge(self):
         self.send_command("GET_TRIG_START_EDGE")
-        return int(self.latest_response)
+        vals = {0: "rising",
+                1: "falling"}
+        return vals[int(self.latest_response)]
     @trig_start_edge.setter
     def trig_start_edge(self, value):
         """0 for rising, 1 for falling."""
+        if value == "rising":
+            value = 0
+        elif value == "falling":
+            value = 1
         self.send_command("SET_TRIG_START_EDGE {}".format(value))
         
     @property
