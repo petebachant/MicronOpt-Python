@@ -66,7 +66,17 @@ class Interrogator(object):
         return int(self.latest_response)
     @trig_mode.setter
     def trig_mode(self, mode):
-        """Mode=0 for untriggered, 1 for S/W triggered, and 3 for H/W triggered."""
+        """
+        Mode=0 for untriggered, 1 for S/W triggered, and 3 for H/W triggered.
+        Alternatively, this may be set as "untriggered", "software", or 
+        "hardware".
+        """
+        if mode == "untriggered":
+            mode = 0
+        elif mode == "software":
+            mode = 1
+        elif mode == "hardware":
+            mode = 3
         self.send_command("SET_TRIG_MODE {}".format(mode))
         if self.latest_response.decode() != "Setting triggering mode to {}.\n".format(mode):
             raise ValueError("Invalid value for triggering mode.")
