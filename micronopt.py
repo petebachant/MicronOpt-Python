@@ -155,7 +155,14 @@ class Interrogator(object):
         return bool(int(self.latest_response))
     @auto_retrig.setter
     def auto_retrig(self, value):
-        """0/False for off, 1/True for on."""
+        """
+        This command configures whether or not the x30 core will automatically 
+        retrigger. If #SET_AUTO_RETRIG is set to zero, then only one start 
+        trigger event will be observed, and only a single data acquisition 
+        event will occur. If #SET_AUTO_RETRIG is set to 1, then the module will 
+        continually retrigger on subsequent start trigger events, following 
+        each successful stop trigger.
+        """
         if value == True:
             value = 1
         elif value == False:
