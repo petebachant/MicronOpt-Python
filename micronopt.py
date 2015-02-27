@@ -156,17 +156,21 @@ class Interrogator(object):
         self.send_command("SET_AUTO_RETRIG {}".format(value))
         
     def sw_trig_start(self):
-        """This command initiates a software start trigger to the x30 core in 
+        """
+        This command initiates a software start trigger to the x30 core in 
         S/W triggering mode. The command can also be used to simulate a 
         hardware trigger start when the module is set to hardware triggering 
-        mode."""
+        mode.
+        """
         self.send_command("SW_TRIG_START")
         
     def sw_trig_stop(self):
-        """This command initiates a software stop trigger to the x30 core in 
+        """
+        This command initiates a software stop trigger to the x30 core in 
         S/W triggering mode. The command can also be used to simulate a 
         hardware trigger stop when the module is set to hardware triggering 
-        mode."""
+        mode.
+        """
         self.send_command("SW_TRIG_STOP")
         
     def set_trigger_defaults(self, on=True):
