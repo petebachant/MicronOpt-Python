@@ -118,17 +118,18 @@ def test_continuous_swtrigger(test_dur=3):
 def test_num_acq_hwtrigger(test_dur=3):
     interr = Interrogator()
     interr.connect()
-    interr.flush_buffer()
+    interr.data_rate_divider = 1
     interr.create_sensors_from_file("test/fbg_properties.json")
+    interr.zero_strain_sensors()
+    interr.flush_buffer()
     interr.trig_mode = "hardware"
     interr.trig_start_edge = "falling"
     interr.trig_stop_type = "num_acq"
     interr.trig_num_acq = 1000
     interr.trig_stop_edge = "rising"
     interr.auto_retrig = False
-    interr.zero_strain_sensors()
-    data = interr.data
     interr.setup_append_data()
+    data = interr.data
     t0 = time.time()
     while time.time() - t0 < test_dur:
         interr.get_data()
@@ -219,5 +220,5 @@ if __name__ == "__main__":
 #    data = test_streaming(2)
     test_continuous_hwtrigger(5)
 #    test_continuous_swtrigger(2)
-#    test_num_acq_hwtrigger(10)
+#    test_num_acq_hwtrigger(5)
 #    test_flush_buffer()

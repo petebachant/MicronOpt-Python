@@ -27,6 +27,7 @@ class Interrogator(object):
         self.append_data = False
         self.stream_data = False
         self.data = {}
+        self.acq_counter = 0
     
     def connect(self):
         self.socket.connect((self.ip_address, self.port))
@@ -298,7 +299,7 @@ class Interrogator(object):
             num_fbg_peaks, num_ffpi_peaks, # 3 fixed
             num_dut1_peaks, num_dut2_peaks, # 4 fixed
             num_dut3_peaks, num_dut4_peaks, # 5 fixed
-            acq_counter3, qr, reserved7, # 6 fixed
+            acq_counter, qr, reserved7, # 6 fixed
             serial_number,  # 7
             kernel_timestamp_microseconds,  # 8
             kernel_timestamp_seconds,  # 9
@@ -373,30 +374,32 @@ class Interrogator(object):
         error = error_and_kernel_rt_loc0 >> 24
         kernel_rt_loc0 = error_and_kernel_rt_loc0 & 0xffffff
         
-        self.data_header = {"Serial number" : serial_number,
-                            "FBG thermistor" : fbg_thermistor,
-                            "FS radix" : fs_radix,
-                            "Firmware version" : fw_ver,
-                            "Acquisition triggered" : acq_triggered,
-                            "Calibration fault" : calibration_fault,
-                            "Start of frame" : start_of_frame,
-                            "Primary fan state" : primary_fan_state,
-                            "Secondary fan state" : secondary_fan_state,
-                            "S0 mux state " : s0_mux_state,
-                            "Percent buffer" : buffer,
-                            "Header length" : header_length,
-                            "Header version " : header_ver,
-                            "Tx ambient temp" : tx_ambient_temp,
-                            "SM041 mux level" : sm041_mux_level,
-                            "HW clock div" : hw_clk_div,
-                            "Granularity" : granularity,
-                            "Operating mode" : operating_mode,
-                            "Starting lambda" : starting_lambda,
-                            "Ending lambda" : ending_lambda,
-                            "Kernel timestamp (seconds)" : kernel_timestamp_seconds,
-                            "Kernel timestamp (microseconds)" : kernel_timestamp_microseconds,
-                            "Kernel timestamp" : datetime.datetime.fromtimestamp(kernel_timestamp_seconds),
-                            "Triggering mode" : triggering_mode}
+        self.data_header = {"Serial number": serial_number,
+                            "FBG thermistor": fbg_thermistor,
+                            "FS radix": fs_radix,
+                            "Firmware version": fw_ver,
+                            "Acquisition triggered": acq_triggered,
+                            "Calibration fault": calibration_fault,
+                            "Start of frame": start_of_frame,
+                            "Primary fan state": primary_fan_state,
+                            "Secondary fan state": secondary_fan_state,
+                            "S0 mux state": s0_mux_state,
+                            "Percent buffer": buffer,
+                            "Header length": header_length,
+                            "Header version": header_ver,
+                            "Tx ambient temp": tx_ambient_temp,
+                            "SM041 mux level": sm041_mux_level,
+                            "HW clock div": hw_clk_div,
+                            "Granularity": granularity,
+                            "Operating mode": operating_mode,
+                            "Starting lambda": starting_lambda,
+                            "Ending lambda": ending_lambda,
+                            "Kernel timestamp (seconds)": kernel_timestamp_seconds,
+                            "Kernel timestamp (microseconds)": kernel_timestamp_microseconds,
+                            "Kernel timestamp": datetime.datetime.fromtimestamp(kernel_timestamp_seconds),
+                            "Triggering mode": triggering_mode,
+                            "Error": error,
+                            "Acquisition counter": acq_counter}
                      
         self.data_serial_no = serial_number
         self.kernel_timestamp = float(kernel_timestamp_seconds) \
@@ -411,6 +414,7 @@ class Interrogator(object):
         if self.append_data and (acq_triggered or self.trig_mode == \
                                  "untriggered"):
             self.do_append_data()
+        self.acq_counter = acq_counter
             
     def flush_buffer(self, receive=True, verbose=False):
         """
