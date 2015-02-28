@@ -54,13 +54,12 @@ def test_continuous_hwtrigger(test_dur=3):
     interr.connect()
     interr.create_sensors_from_file("test/fbg_properties.json")
     interr.trig_mode = "untriggered"
-    interr.auto_retrig = True
     interr.zero_strain_sensors()
-    interr.trig_mode = "hardware"
     interr.trig_start_edge = "falling"
     interr.trig_stop_type = "edge"
     interr.trig_stop_edge = "rising"
-    interr.auto_retrig = True
+    interr.auto_retrig = False
+    interr.trig_mode = "hardware"
     print(interr.trig_mode)
     interr.setup_append_data()
     data = interr.data
@@ -112,6 +111,7 @@ def test_continuous_swtrigger(test_dur=3):
     plt.xlabel("t (s)")
     plt.ylabel("Wavelength (nm)")
     print(interr.data_header)
+    interr.sw_trig_stop()
     interr.disconnect()
     return data
     
@@ -121,8 +121,6 @@ def test_num_acq_hwtrigger(test_dur=3):
     interr.data_rate_divider = 1
     interr.create_sensors_from_file("test/fbg_properties.json")
     interr.zero_strain_sensors()
-    interr.flush_buffer()
-    interr.trig_mode = "hardware"
     interr.trig_start_edge = "falling"
     interr.trig_stop_type = "num_acq"
     interr.trig_num_acq = 1000
@@ -145,6 +143,41 @@ def test_num_acq_hwtrigger(test_dur=3):
     plt.xlabel("t (s)")
     plt.ylabel("T (deg. C)")
     print(interr.data_header)
+    interr.disconnect()
+    return data
+    
+def test_num_acq_swtrigger(test_dur=3):
+    interr = Interrogator()
+    interr.connect()
+    interr.data_rate_divider = 1
+    interr.create_sensors_from_file("test/fbg_properties.json")
+    interr.zero_strain_sensors()
+    interr.flush_buffer()
+    interr.trig_mode = "software"
+    interr.trig_start_edge = "falling"
+    interr.trig_stop_type = "num_acq"
+    interr.trig_num_acq = 1000
+    interr.trig_stop_edge = "rising"
+    interr.auto_retrig = False
+    interr.setup_append_data()
+    data = interr.data
+    interr.sw_trig_start()
+    t0 = time.time()
+    while time.time() - t0 < test_dur:
+        interr.get_data()
+        interr.sleep()
+    t = data["time"]
+    data2 = data[interr.sensors[1].name + "_strain"]
+    try:
+        data2 -= data2[0]
+    except IndexError:
+        pass
+    plt.figure()
+    plt.plot(t, data2)
+    plt.xlabel("t (s)")
+    plt.ylabel("T (deg. C)")
+    print(interr.data_header)
+    interr.sw_trig_stop()
     interr.disconnect()
     return data
     
@@ -218,7 +251,8 @@ if __name__ == "__main__":
 #    test_reboot()
 #    data = test_continuous(2)
 #    data = test_streaming(2)
-    test_continuous_hwtrigger(5)
-#    test_continuous_swtrigger(2)
+    data = test_continuous_hwtrigger(5)
+#    data = test_continuous_swtrigger(2)
 #    test_num_acq_hwtrigger(5)
+#    data = test_num_acq_swtrigger(5)
 #    test_flush_buffer()

@@ -411,8 +411,7 @@ class Interrogator(object):
                 sensor.wavelength /= granularity
             except:
                 sensor.wavelength = np.nan
-        if self.append_data and (acq_triggered or self.trig_mode == \
-                                 "untriggered"):
+        if self.append_data and error != 9:
             self.do_append_data()
         self.acq_counter = acq_counter
             
