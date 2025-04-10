@@ -20,3 +20,8 @@ packages = ["micronopt"]
 
 [tool.hatch.version]
 path = "micronopt.py"
+
+[tool.ruff]
+target-version = "py39"
+line-length = 79
+fix = true
